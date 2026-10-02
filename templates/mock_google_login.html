@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in with Google - AgriAdvisor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', -apple-system, sans-serif;
+      background-color: #f0f4f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .google-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 40px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e1e3e1;
+    }
+    .google-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .google-logo svg {
+      width: 32px;
+      height: 32px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 500;
+      color: #1f1f1f;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #444746;
+      margin-bottom: 24px;
+    }
+    .notice-badge {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #1b5e20;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    .account-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid #c4c7c5;
+      border-radius: 16px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .account-item:hover {
+      background: #f8fafd;
+      border-color: #0b57d0;
+    }
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1b5e20;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .account-name {
+      font-weight: 500;
+      color: #1f1f1f;
+      font-size: 15px;
+    }
+    .account-email {
+      font-size: 13px;
+      color: #444746;
+    }
+    .custom-form {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid #e1e3e1;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444746;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #747775;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: #0b57d0;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background: #0842a0;
+    }
+    .btn-cancel {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      color: #0b57d0;
+      text-decoration: none;
+      font-size: 13.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="google-card">
+    <div class="google-logo">
+      <svg viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.64-5.2 3.64-9.15z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.73-2.1-6.67-4.93H1.28v3.15C3.25 21.3 7.31 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.33 14.27c-.24-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.28C.46 8.2 0 10.04 0 12s.46 3.8 1.28 5.42l4.05-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.28 6.58l4.05 3.15c.94-2.83 3.57-4.98 6.67-4.98z"/>
+      </svg>
+      <span style="font-size: 19px; font-weight: 500; color: #444746;">Google</span>
+    </div>
+
+    <div class="title">Choose an account</div>
+    <div class="subtitle">to continue to <strong>AgriAdvisor</strong></div>
+
+    <div class="notice-badge">
+      <i class="fa-solid fa-code"></i> <strong>Local Development Mode:</strong><br>
+      Real Google OAuth 2.0 is active when <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> are added to <code>.env</code>. You can pick this test profile or enter any custom Google account below.
+    </div>
+
+    <!-- Quick preset account -->
+    <form method="POST" action="{{ url_for('auth.mock_google_callback') }}">
+      <input type="hidden" name="state" value="{{ state }}">
+      <input type="hidden" name="google_id" value="109283748291039485721">
+      <input type="hidden" name="name" value="Rakesh Pujari">
+      <input type="hidden" name="email" value="rkpujari@gmail.com">
+      <input type="hidden" name="picture" value="">
+
+      <button type="submit" class="account-item" style="width: 100%; background: #ffffff; text-align: left;">
+        <div class="avatar">RP</div>
+        <div>
+          <div class="account-name">Rakesh Pujari</div>
+          <div class="account-email">rkpujari@gmail.com</div>
+        </div>
+      </button>
+    </form>
+
+    <!-- Custom Account Input -->
+    <div class="custom-form">
+      <div style="font-size: 13.5px; font-weight: 500; color: #1f1f1f; margin-bottom: 12px;">
+        Or use another Google Account:
+      </div>
+      <form method="POST" action="{{ url_for('auth.mock_google_callback') }}">
+        <input type="hidden" name="state" value="{{ state }}">
+        <input type="hidden" name="google_id" value="google_user_{{ state[:10] }}">
+        
+        <div>
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-input" placeholder="e.g. Anand Patil" required>
+        </div>
+
+        <div>
+          <label class="form-label">Gmail / Google Email</label>
+          <input type="email" name="email" class="form-input" placeholder="e.g. anand.patil@gmail.com" required>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          Continue with this Account
+        </button>
+      </form>
+    </div>
+
+    <a href="{{ url_for('auth.login') }}" class="btn-cancel">Cancel and return to login</a>
+  </div>
+
+</body>
+</html>

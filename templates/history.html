@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Soil Telemetry History{% endblock %}
+{% block page_title %}HISTORICAL SOIL TELEMETRY & ANALYTICS{% endblock %}
+{% block page_subtitle %}Interactive Multi-Parameter Trends, Historical Logs & CSV Export{% endblock %}
+
+{% block content %}
+
+<!-- CONTROLS & FILTER BAR -->
+<div class="card" style="padding: 16px 20px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    
+    <!-- Time Range Selector Buttons -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span style="font-weight: 700; font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Range:</span>
+      <button class="btn btn-sm btn-primary range-btn" data-range="24h">Last 24 Hours</button>
+      <button class="btn btn-sm btn-outline range-btn" data-range="7d">Last 7 Days</button>
+      <button class="btn btn-sm btn-outline range-btn" data-range="30d">Last 30 Days</button>
+      <button class="btn btn-sm btn-outline range-btn" data-range="custom">Custom Range</button>
+    </div>
+
+    <!-- Export & Actions -->
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <a href="{{ url_for('api.export_csv') }}" id="exportCsvBtn" class="btn btn-sm btn-success">
+        <i class="fa-solid fa-file-csv"></i> Export CSV
+      </a>
+      <a href="{{ url_for('api.export_pdf') }}" class="btn btn-sm btn-primary">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Custom Date Range Sub-Bar (Hidden by default) -->
+  <div id="customDateRangeBar" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light); display: none; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <label for="startDateInput" style="font-size: 12px; color: var(--text-muted);">From:</label>
+      <input type="datetime-local" id="startDateInput" class="form-control" style="width: auto; padding: 4px 8px; font-size: 12px;">
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <label for="endDateInput" style="font-size: 12px; color: var(--text-muted);">To:</label>
+      <input type="datetime-local" id="endDateInput" class="form-control" style="width: auto; padding: 4px 8px; font-size: 12px;">
+    </div>
+    <button class="btn btn-sm btn-primary" id="applyCustomRangeBtn">Apply Filter</button>
+  </div>
+</div>
+
+<!-- PARAMETER GRAPH SELECTOR TABS -->
+<div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px;">
+  <button class="btn btn-sm btn-primary param-tab-btn" data-param="all">All Combined</button>
+  <button class="btn btn-sm btn-outline param-tab-btn" data-param="moisture"><i class="fa-solid fa-droplet"></i> Moisture</button>
+  <button class="btn btn-sm btn-outline param-tab-btn" data-param="temperature"><i class="fa-solid fa-temperature-half"></i> Temperature</button>
+  <button class="btn btn-sm btn-outline param-tab-btn" data-param="ec"><i class="fa-solid fa-bolt"></i> EC</button>
+  <button class="btn btn-sm btn-outline param-tab-btn" data-param="ph"><i class="fa-solid fa-flask-vial"></i> pH</button>
+  <button class="btn btn-sm btn-outline param-tab-btn" data-param="npk"><i class="fa-solid fa-seedling"></i> N-P-K Nutrients</button>
+</div>
+
+<!-- MAIN INTERACTIVE CHART CONTAINER -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-chart-area"></i>
+      <span id="chartHeading">Soil Parameters vs Time</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted);" id="dataPointsCount">Loading historical series...</span>
+  </div>
+  <div style="height: 380px; position: relative;">
+    <canvas id="historicalChart"></canvas>
+  </div>
+</div>
+
+<!-- DATA TABLE SECTION (SECTION 28 REQUIREMENT) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-table-list"></i>
+      <span>Soil Telemetry Records Database</span>
+    </div>
+
+    <!-- Table Search Filter -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <input type="text" id="tableSearchInput" placeholder="Filter by device ID..." class="form-control" style="width: 200px; padding: 5px 10px; font-size: 12px;">
+      <button class="btn btn-sm btn-outline" id="refreshTableBtn">
+        <i class="fa-solid fa-arrows-rotate"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Device</th>
+          <th>Moisture (%)</th>
+          <th>Temp (°C)</th>
+          <th>EC (µS/cm)</th>
+          <th>pH</th>
+          <th>N (mg/kg)</th>
+          <th>P (mg/kg)</th>
+          <th>K (mg/kg)</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody id="historyTableBody">
+        <tr>
+          <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">
+            Loading telemetry log records...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-light);">
+    <div style="font-size: 12px; color: var(--text-muted);" id="paginationInfo">
+      Showing 0 to 0 of 0 entries
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-sm btn-outline" id="prevPageBtn" disabled>&laquo; Previous</button>
+      <button class="btn btn-sm btn-outline" id="nextPageBtn" disabled>Next &raquo;</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

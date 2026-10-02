@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}About AgriAdvisor{% endblock %}
+{% block page_title %}ABOUT THE SYSTEM{% endblock %}
+{% block page_subtitle %}AgriAdvisor - IoT Soil Monitoring, Analysis & Crop Suitability Platform{% endblock %}
+
+{% block content %}
+
+<!-- HERO BANNER (SECTION 47 REQUIREMENT) -->
+<div class="card" style="background: linear-gradient(135deg, #1b5e20, #2e7d32); color: #ffffff; padding: 36px 30px;">
+  <div style="max-width: 800px;">
+    <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">
+      <i class="fa-solid fa-graduation-cap"></i> Major Engineering &amp; Agri-IoT Project
+    </div>
+    <h1 style="font-size: 26px; font-weight: 800; line-height: 1.25; margin-bottom: 8px; color: #ffffff;">
+      AgriAdvisor
+    </h1>
+    <h2 style="font-size: 15px; font-weight: 500; color: #bbf7d0; margin-bottom: 16px;">
+      IoT-Based Soil Monitoring, Telemetry Analytics &amp; Crop Optimization Platform
+    </h2>
+    <p style="font-size: 13.5px; line-height: 1.6; color: #f0fdf4;">
+      An end-to-end cyber-physical agricultural intelligence system integrating a 7-in-1 Modbus RTU RS485 soil probe, an ESP32 micro-controller node, Wi-Fi telemetry transmission, a high-performance Flask REST API backend, an SQLite relational database, and an algorithmic crop suitability and soil health optimization engine.
+    </p>
+  </div>
+</div>
+
+<!-- SYSTEM ARCHITECTURE (SECTION 2 REQUIREMENT) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-sitemap"></i>
+      <span>End-to-End System Architecture</span>
+    </div>
+  </div>
+
+  <div style="background: #0f172a; color: #f8fafc; border-radius: 10px; padding: 24px; font-family: monospace; font-size: 13px; line-height: 1.8; overflow-x: auto;">
+<pre style="color: #38bdf8;">
++-------------------------------------------------------------+
+|                     7-IN-1 SOIL SENSOR                      |
+| (Moisture, Temperature, EC, pH, Nitrogen, Phosphorus, Pot.) |
++-------------------------------------------------------------+
+                               |
+                               | RS485 / Modbus RTU (Differential A & B)
+                               v
++-------------------------------------------------------------+
+|                  MAX485 TRANSCEIVER MODULE                  |
+|          (Converts Differential RS485 to TTL UART)          |
++-------------------------------------------------------------+
+                               |
+                               | UART2 (RX=GPIO16, TX=GPIO17, DE/RE=GPIO4)
+                               v
++-------------------------------------------------------------+
+|                      ESP32 DEV MODULE                       |
+|   (Modbus CRC16 Calculation, Register Parsing, Wi-Fi Stack) |
++-------------------------------------------------------------+
+                               |
+                               | Wi-Fi 802.11 b/g/n (HTTP POST + X-API-Key)
+                               v
++-------------------------------------------------------------+
+|                    FLASK REST API BACKEND                   |
+|   (/api/soil-data: JSON Validation, Authentication & Store) |
++-------------------------------------------------------------+
+                               |
+                               v
++-------------------------------------------------------------+
+|                      SQLITE DATABASE                        |
+|       (soil_readings, devices, users, system_settings)      |
++-------------------------------------------------------------+
+                               |
+             +-----------------+-----------------+
+             |                                   |
+             v                                   v
++--------------------------+       +--------------------------+
+|  SOIL HEALTH EVALUATION  |       |    CROP OPTIMIZATION     |
+|   & AGRONOMIC ADVISORY   |       |   SUITABILITY ENGINE     |
++--------------------------+       +--------------------------+
+             |                                   |
+             +-----------------+-----------------+
+                               |
+                               v
++-------------------------------------------------------------+
+|             RESPONSIVE WEB INTERFACE & DASHBOARD            |
+|   (Live Feed, Chart.js Trends, PDF Reports, Device Mgmt.)   |
++-------------------------------------------------------------+
+</pre>
+  </div>
+</div>
+
+<!-- TECHNOLOGY STACK (SECTION 1 REQUIREMENT) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+  
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-code"></i>
+        <span>Backend &amp; API Stack</span>
+      </div>
+    </div>
+    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+      <li><strong>Python 3.12:</strong> Core application environment</li>
+      <li><strong>Flask 3.x:</strong> RESTful microservices and routing</li>
+      <li><strong>SQLAlchemy ORM:</strong> Database abstraction &amp; query security</li>
+      <li><strong>SQLite:</strong> Local embedded zero-config relational store</li>
+      <li><strong>ReportLab:</strong> Automated vector PDF report generation</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-desktop"></i>
+        <span>Frontend Stack</span>
+      </div>
+    </div>
+    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+      <li><strong>Semantic HTML5:</strong> Accessible document architecture</li>
+      <li><strong>Modern CSS3:</strong> Responsive Grid, Flexbox, custom design tokens</li>
+      <li><strong>Chart.js 4.4:</strong> High-performance canvas interactive charts</li>
+      <li><strong>Vanilla JavaScript (ES6+):</strong> Async/Await, reactive polling</li>
+      <li><strong>FontAwesome 6:</strong> Comprehensive icons</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-microchip"></i>
+        <span>Hardware &amp; IoT Stack</span>
+      </div>
+    </div>
+    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+      <li><strong>ESP32 DevKit:</strong> Dual-core 240MHz Wi-Fi microcontroller</li>
+      <li><strong>MAX485 Module:</strong> Full RS485 transceiver with flow control</li>
+      <li><strong>7-in-1 Sensor:</strong> Industrial probe (NPK + pH + EC + Moisture + Temp)</li>
+      <li><strong>Modbus RTU:</strong> Robust 16-bit CRC differential industrial bus</li>
+    </ul>
+  </div>
+
+</div>
+
+{% endblock %}

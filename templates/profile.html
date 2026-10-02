@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile{% endblock %}
+{% block page_title %}MY USER PROFILE{% endblock %}
+{% block page_subtitle %}Google Authenticated Account Details & Farm Operator Information{% endblock %}
+
+{% block content %}
+
+<!-- PROFILE HERO HEADER (SECTION 4 & 5) -->
+<div class="card" style="padding: 28px; background: linear-gradient(135deg, var(--bg-surface), #f0fdf4); border-color: var(--primary-border); margin-bottom: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+    
+    <div style="display: flex; align-items: center; gap: 22px;">
+      <!-- Profile Picture or Initials Avatar -->
+      <div style="position: relative;">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture }}" alt="{{ user.get_display_name() }}" 
+               style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);"
+               onerror="this.style.display='none'; document.getElementById('heroInitialsAvatar').style.display='flex';">
+          <div id="heroInitialsAvatar" class="avatar-initials-large" style="display: none;">
+            {{ user.get_initials() }}
+          </div>
+        {% else %}
+          <div class="avatar-initials-large">
+            {{ user.get_initials() }}
+          </div>
+        {% endif %}
+        
+        <!-- Google Verified Badge -->
+        <div style="position: absolute; bottom: 0; right: 0; background: #ffffff; border-radius: 50%; padding: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" title="Verified Google Account">
+          <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.64-5.2 3.64-9.15z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.73-2.1-6.67-4.93H1.28v3.15C3.25 21.3 7.31 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.33 14.27c-.24-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.28C.46 8.2 0 10.04 0 12s.46 3.8 1.28 5.42l4.05-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.28 6.58l4.05 3.15c.94-2.83 3.57-4.98 6.67-4.98z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- User Identity Details -->
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h1 style="font-size: 22px; font-weight: 800; color: var(--text-main);" id="heroDisplayName">
+            {{ user.get_display_name() }}
+          </h1>
+          <span class="badge {{ 'badge-optimal' if user.is_admin() else 'badge-normal' }}">
+            {{ user.role }}
+          </span>
+        </div>
+
+        <div style="font-size: 13.5px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-envelope" style="color: var(--primary);"></i>
+          <span>{{ user.email }}</span>
+          <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+            <i class="fa-solid fa-circle-check"></i> Google Verified
+          </span>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px; display: flex; gap: 16px;">
+          <span><i class="fa-solid fa-phone"></i> {{ user.mobile_number or 'No phone added' }}</span>
+          <span><i class="fa-solid fa-location-dot"></i> {{ user.city or user.location or 'Location unconfigured' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div style="display: flex; gap: 16px; text-align: center;">
+      <div style="background: var(--bg-card); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Assigned Devices</div>
+        <div style="font-size: 18px; font-weight: 800; color: var(--primary);">{{ user.devices|length }}</div>
+      </div>
+      <div style="background: var(--bg-card); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Member Since</div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-top: 3px;">
+          {{ user.created_at.strftime('%b %Y') if user.created_at else 'Recent' }}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PROFILE EDITING FORM CARD -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-user-pen"></i>
+      <span>Edit Farm Operator Information</span>
+    </div>
+    <span style="font-size: 12px; color: var(--text-muted);">Updates are synchronized with your account</span>
+  </div>
+
+  <form id="profileForm">
+    
+    <!-- Row 1: Name and Email -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;">
+      
+      <div class="form-group">
+        <label class="form-label" for="profileName">
+          Full Name <span style="color: #dc2626;">*</span>
+        </label>
+        <input type="text" id="profileName" class="form-control" value="{{ user.name or '' }}" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profileEmail">
+          Google Account Email <span style="color: var(--text-muted); font-size: 11px;">(Authenticated Identity)</span>
+        </label>
+        <div style="position: relative;">
+          <input type="email" id="profileEmail" class="form-control" value="{{ user.email }}" disabled style="background: var(--bg-main); cursor: not-allowed; color: var(--text-muted);">
+          <i class="fa-solid fa-lock" style="position: absolute; right: 12px; top: 12px; color: var(--text-light);" title="Google Identity is read-only"></i>
+        </div>
+        <small style="color: var(--text-muted); font-size: 11px;">Your email is tied to Google OAuth and cannot be modified.</small>
+      </div>
+
+    </div>
+
+    <!-- Row 2: Mobile Number & Location -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;">
+      
+      <div class="form-group">
+        <label class="form-label" for="profileMobile">
+          Mobile Number
+        </label>
+        <input type="tel" id="profileMobile" class="form-control" value="{{ user.mobile_number or '' }}" placeholder="e.g. +91 9876543210" pattern="[\+]?[0-9\s\-]{8,16}">
+        <small style="color: var(--text-muted); font-size: 11px;">Used for SMS/sensor alerts when configured.</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profileLocation">
+          Farm / Property Location
+        </label>
+        <input type="text" id="profileLocation" class="form-control" value="{{ user.location or '' }}" placeholder="e.g. North Acre Farm Plot">
+      </div>
+
+    </div>
+
+    <!-- Row 3: Address & City -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px;">
+      
+      <div class="form-group">
+        <label class="form-label" for="profileAddress">
+          Street Address / Village
+        </label>
+        <input type="text" id="profileAddress" class="form-control" value="{{ user.address or '' }}" placeholder="e.g. Survey No. 42, Chikodi Road">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profileCity">
+          City / Taluk
+        </label>
+        <input type="text" id="profileCity" class="form-control" value="{{ user.city or '' }}" placeholder="e.g. Belagavi">
+      </div>
+
+    </div>
+
+    <!-- Row 4: State, Country, Pincode -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px;">
+      
+      <div class="form-group">
+        <label class="form-label" for="profileState">
+          State
+        </label>
+        <input type="text" id="profileState" class="form-control" value="{{ user.state or '' }}" placeholder="e.g. Karnataka">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profileCountry">
+          Country
+        </label>
+        <input type="text" id="profileCountry" class="form-control" value="{{ user.country or 'India' }}" placeholder="e.g. India">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="profilePincode">
+          Pincode / Postal Code
+        </label>
+        <input type="text" id="profilePincode" class="form-control" value="{{ user.pincode or '' }}" placeholder="e.g. 591201" pattern="[0-9]{5,8}">
+      </div>
+
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-light);">
+      <span id="profileStatusMsg" style="font-size: 13px; font-weight: 600; display: none;"></span>
+      <button type="submit" class="btn btn-primary" id="btnSaveProfile">
+        <i class="fa-solid fa-floppy-disk"></i> Save Profile
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<style>
+  .avatar-initials-large {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 30px;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const saveBtn = document.getElementById('btnSaveProfile');
+    const statusMsg = document.getElementById('profileStatusMsg');
+    
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    
+    const payload = {
+      name: document.getElementById('profileName').value.trim(),
+      mobile_number: document.getElementById('profileMobile').value.trim(),
+      location: document.getElementById('profileLocation').value.trim(),
+      address: document.getElementById('profileAddress').value.trim(),
+      city: document.getElementById('profileCity').value.trim(),
+      state: document.getElementById('profileState').value.trim(),
+      country: document.getElementById('profileCountry').value.trim(),
+      pincode: document.getElementById('profilePincode').value.trim()
+    };
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      statusMsg.style.display = 'inline';
+      if (res.ok) {
+        statusMsg.style.color = '#16a34a';
+        statusMsg.innerHTML = '<i class="fa-solid fa-circle-check"></i> Profile updated successfully!';
+        document.getElementById('heroDisplayName').textContent = payload.name || 'User';
+        // Update user dropdown name if exists
+        const topName = document.getElementById('topUserDropdownName');
+        if (topName) topName.textContent = payload.name;
+      } else {
+        statusMsg.style.color = '#dc2626';
+        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.message || 'Error updating profile'}`;
+      }
+    } catch (err) {
+      statusMsg.style.display = 'inline';
+      statusMsg.style.color = '#dc2626';
+      statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Network error';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Profile';
+      setTimeout(() => { statusMsg.style.display = 'none'; }, 4000);
+    }
+  });
+</script>
+{% endblock %}

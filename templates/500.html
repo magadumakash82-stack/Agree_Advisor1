@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error{% endblock %}
+{% block page_title %}500 - Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 60px 20px;">
+  <div style="font-size: 54px; color: #dc2626; margin-bottom: 12px;">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+  </div>
+  <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Internal Server Error</h2>
+  <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 24px;">
+    An unexpected error occurred during processing.
+  </p>
+  {% if error %}
+    <pre style="background: #f8fafc; border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; font-size: 12px; max-width: 600px; margin: 0 auto 20px; text-align: left;">{{ error }}</pre>
+  {% endif %}
+  <a href="{{ url_for('web.dashboard') }}" class="btn btn-primary">
+    <i class="fa-solid fa-house"></i> Return to Dashboard
+  </a>
+</div>
+{% endblock %}

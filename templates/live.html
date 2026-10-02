@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Soil Monitoring{% endblock %}
+{% block page_title %}LIVE SOIL TELEMETRY FEED{% endblock %}
+{% block page_subtitle %}High-Frequency Sensor Stream, Real-Time Meter Visualizers & Packet Log{% endblock %}
+
+{% block content %}
+
+<!-- TOP CONTROLS BAR -->
+<div class="card" style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <div style="font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
+      <span class="indicator-dot online" id="liveStreamPulse"></span>
+      <span>STREAM: <strong id="streamStatusText">ACTIVE (5s)</strong></span>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label for="pollIntervalSelect" style="font-size: 12px; color: var(--text-muted);">Polling Rate:</label>
+      <select id="pollIntervalSelect" class="form-control" style="width: auto; padding: 4px 8px; font-size: 12px;">
+        <option value="2000">2 Seconds (High Rate)</option>
+        <option value="5000" selected>5 Seconds (Standard)</option>
+        <option value="10000">10 Seconds (Power Save)</option>
+        <option value="0">Paused</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button class="btn btn-sm btn-outline" id="instantRefreshBtn">
+      <i class="fa-solid fa-arrows-rotate"></i> Instant Poll
+    </button>
+    <button class="btn btn-sm btn-primary" id="triggerDemoReadingBtn">
+      <i class="fa-solid fa-plus"></i> Inject Packet
+    </button>
+  </div>
+</div>
+
+<!-- 7 REAL-TIME GAUGES / BARS -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-sliders"></i>
+      <span>7-in-1 Sensor Parameter Meters</span>
+    </div>
+    <span style="font-size: 11.5px; color: var(--text-muted);" id="liveDeviceLabel">Device: SOIL_001</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+    
+    <!-- 1. Moisture Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #0284c7;"><i class="fa-solid fa-droplet"></i> Moisture</span>
+        <strong id="liveValMoisture">-- %</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarMoisture" style="background: #0284c7; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0%</span>
+        <span id="liveStatusMoisture" class="badge badge-normal">NORMAL</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <!-- 2. Temperature Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #ea580c;"><i class="fa-solid fa-temperature-half"></i> Temperature</span>
+        <strong id="liveValTemperature">-- °C</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarTemperature" style="background: #ea580c; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0°C</span>
+        <span id="liveStatusTemperature" class="badge badge-normal">NORMAL</span>
+        <span>50°C</span>
+      </div>
+    </div>
+
+    <!-- 3. EC Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #9333ea;"><i class="fa-solid fa-bolt"></i> Electrical Cond. (EC)</span>
+        <strong id="liveValEC">-- µS/cm</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarEC" style="background: #9333ea; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0</span>
+        <span id="liveStatusEC" class="badge badge-normal">NORMAL</span>
+        <span>4000 µS/cm</span>
+      </div>
+    </div>
+
+    <!-- 4. pH Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #854d0e;"><i class="fa-solid fa-flask-vial"></i> Soil pH</span>
+        <strong id="liveValPH">--</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarPH" style="background: #854d0e; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0 (Acidic)</span>
+        <span id="liveStatusPH" class="badge badge-normal">NORMAL</span>
+        <span>14 (Alkaline)</span>
+      </div>
+    </div>
+
+    <!-- 5. Nitrogen Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #16a34a;"><i class="fa-solid fa-plant-wilt"></i> Nitrogen (N)</span>
+        <strong id="liveValNitrogen">-- mg/kg</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarNitrogen" style="background: #16a34a; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0</span>
+        <span id="liveStatusNitrogen" class="badge badge-normal">NORMAL</span>
+        <span>120 mg/kg</span>
+      </div>
+    </div>
+
+    <!-- 6. Phosphorus Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #dc2626;"><i class="fa-solid fa-seedling"></i> Phosphorus (P)</span>
+        <strong id="liveValPhosphorus">-- mg/kg</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarPhosphorus" style="background: #dc2626; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0</span>
+        <span id="liveStatusPhosphorus" class="badge badge-normal">NORMAL</span>
+        <span>80 mg/kg</span>
+      </div>
+    </div>
+
+    <!-- 7. Potassium Bar -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 700; color: #4f46e5;"><i class="fa-solid fa-tree"></i> Potassium (K)</span>
+        <strong id="liveValPotassium">-- mg/kg</strong>
+      </div>
+      <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div id="liveBarPotassium" style="background: #4f46e5; width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+        <span>0</span>
+        <span id="liveStatusPotassium" class="badge badge-normal">NORMAL</span>
+        <span>140 mg/kg</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LIVE STREAM PACKET LOG TABLE -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-terminal"></i>
+      <span>Incoming Telemetry Stream (Live Packets)</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted);">Showing recent transmissions</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Device</th>
+          <th>Moisture</th>
+          <th>Temp</th>
+          <th>EC</th>
+          <th>pH</th>
+          <th>N</th>
+          <th>P</th>
+          <th>K</th>
+          <th>Origin</th>
+        </tr>
+      </thead>
+      <tbody id="livePacketTableBody">
+        <tr>
+          <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">
+            Awaiting sensor telemetry packets...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let pollIntervalMs = 5000;
+  let timerId = null;
+  const recentPackets = [];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchLiveFeed();
+    startPolling();
+
+    const select = document.getElementById('pollIntervalSelect');
+    select.addEventListener('change', (e) => {
+      pollIntervalMs = parseInt(e.target.value);
+      restartPolling();
+    });
+
+    document.getElementById('instantRefreshBtn').addEventListener('click', () => {
+      fetchLiveFeed();
+    });
+
+    document.getElementById('triggerDemoReadingBtn').addEventListener('click', async () => {
+      await fetch('/api/demo/generate-reading', { method: 'POST' });
+      fetchLiveFeed();
+    });
+  });
+
+  function startPolling() {
+    if (pollIntervalMs > 0) {
+      timerId = setInterval(fetchLiveFeed, pollIntervalMs);
+      document.getElementById('streamStatusText').textContent = `ACTIVE (${pollIntervalMs / 1000}s)`;
+      document.getElementById('liveStreamPulse').className = 'indicator-dot online';
+    } else {
+      document.getElementById('streamStatusText').textContent = 'PAUSED';
+      document.getElementById('liveStreamPulse').className = 'indicator-dot offline';
+    }
+  }
+
+  function restartPolling() {
+    if (timerId) clearInterval(timerId);
+    startPolling();
+  }
+
+  async function fetchLiveFeed() {
+    try {
+      const res = await fetch('/api/latest-soil-data');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || data.status === 'empty') return;
+
+      updateMeters(data);
+      appendPacket(data);
+
+    } catch (e) {
+      console.warn("Live feed fetch error:", e);
+    }
+  }
+
+  function updateMeters(d) {
+    document.getElementById('liveDeviceLabel').textContent = `Device: ${d.device_id}`;
+
+    // Moisture (0 - 100%)
+    document.getElementById('liveValMoisture').textContent = `${d.moisture} %`;
+    document.getElementById('liveBarMoisture').style.width = `${Math.min(100, Math.max(0, d.moisture))}%`;
+    setParamBadge('liveStatusMoisture', d.health_analysis?.parameters?.moisture);
+
+    // Temperature (0 - 50°C)
+    document.getElementById('liveValTemperature').textContent = `${d.temperature} °C`;
+    const tempPct = Math.min(100, Math.max(0, (d.temperature / 50) * 100));
+    document.getElementById('liveBarTemperature').style.width = `${tempPct}%`;
+    setParamBadge('liveStatusTemperature', d.health_analysis?.parameters?.temperature);
+
+    // EC (0 - 4000 µS/cm)
+    document.getElementById('liveValEC').textContent = `${d.ec} µS/cm`;
+    const ecPct = Math.min(100, Math.max(0, (d.ec / 4000) * 100));
+    document.getElementById('liveBarEC').style.width = `${ecPct}%`;
+    setParamBadge('liveStatusEC', d.health_analysis?.parameters?.ec);
+
+    // pH (0 - 14)
+    document.getElementById('liveValPH').textContent = `${d.ph}`;
+    const phPct = Math.min(100, Math.max(0, (d.ph / 14) * 100));
+    document.getElementById('liveBarPH').style.width = `${phPct}%`;
+    setParamBadge('liveStatusPH', d.health_analysis?.parameters?.ph);
+
+    // Nitrogen (0 - 120 mg/kg)
+    document.getElementById('liveValNitrogen').textContent = `${d.nitrogen} mg/kg`;
+    const nPct = Math.min(100, Math.max(0, (d.nitrogen / 120) * 100));
+    document.getElementById('liveBarNitrogen').style.width = `${nPct}%`;
+    setParamBadge('liveStatusNitrogen', d.health_analysis?.parameters?.nitrogen);
+
+    // Phosphorus (0 - 80 mg/kg)
+    document.getElementById('liveValPhosphorus').textContent = `${d.phosphorus} mg/kg`;
+    const pPct = Math.min(100, Math.max(0, (d.phosphorus / 80) * 100));
+    document.getElementById('liveBarPhosphorus').style.width = `${pPct}%`;
+    setParamBadge('liveStatusPhosphorus', d.health_analysis?.parameters?.phosphorus);
+
+    // Potassium (0 - 140 mg/kg)
+    document.getElementById('liveValPotassium').textContent = `${d.potassium} mg/kg`;
+    const kPct = Math.min(100, Math.max(0, (d.potassium / 140) * 100));
+    document.getElementById('liveBarPotassium').style.width = `${kPct}%`;
+    setParamBadge('liveStatusPotassium', d.health_analysis?.parameters?.potassium);
+  }
+
+  function setParamBadge(elemId, meta) {
+    const el = document.getElementById(elemId);
+    if (!el || !meta) return;
+    el.textContent = meta.label;
+    if (meta.level === 'optimal' || meta.level === 'normal') {
+      el.className = 'badge badge-normal';
+    } else if (meta.level === 'warning') {
+      el.className = 'badge badge-warning';
+    } else {
+      el.className = 'badge badge-critical';
+    }
+  }
+
+  function appendPacket(d) {
+    // Only append if it's a new timestamp or new packet
+    const last = recentPackets[0];
+    if (last && last.formatted_time === d.formatted_time && last.moisture === d.moisture) {
+      return;
+    }
+
+    recentPackets.unshift(d);
+    if (recentPackets.length > 10) recentPackets.pop();
+
+    const tbody = document.getElementById('livePacketTableBody');
+    let html = '';
+
+    recentPackets.forEach(p => {
+      const originTag = p.is_simulated ? 
+        '<span class="badge-demo">SIMULATED</span>' : 
+        '<span class="badge-live">RS485 ESP32</span>';
+
+      html += `
+        <tr>
+          <td><code style="font-weight:600;">${p.formatted_time || p.timestamp}</code></td>
+          <td><strong>${p.device_id}</strong></td>
+          <td>${p.moisture}%</td>
+          <td>${p.temperature}°C</td>
+          <td>${p.ec}</td>
+          <td>${p.ph}</td>
+          <td>${p.nitrogen}</td>
+          <td>${p.phosphorus}</td>
+          <td>${p.potassium}</td>
+          <td>${originTag}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+</script>
+{% endblock %}

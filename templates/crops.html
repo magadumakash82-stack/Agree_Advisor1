@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Crop Optimization Engine{% endblock %}
+{% block page_title %}CROP OPTIMIZATION & SUITABILITY ENGINE{% endblock %}
+{% block page_subtitle %}Transparent Parameter-by-Parameter Agronomic Compatibility Analysis{% endblock %}
+
+{% block content %}
+
+<!-- DISCLAIMER BANNER (MANDATORY REQUIREMENT SECTION 14 & 18) -->
+<div class="alert alert-info" style="margin-bottom: 20px;">
+  <div style="display: flex; gap: 10px; align-items: flex-start;">
+    <i class="fa-solid fa-circle-info" style="font-size: 16px; margin-top: 2px;"></i>
+    <div>
+      <strong>Indicative Agronomic Notice:</strong>
+      Recommendations are indicative and based strictly on entered/measured physical and nutrient soil parameters. They should be validated using local agricultural extension guidance and certified laboratory testing prior to commercial sowing or fertilization decisions.
+    </div>
+  </div>
+</div>
+
+<!-- CURRENT SOIL CONDITION SECTION (SECTION 16 REQUIREMENT) -->
+<div class="card" style="padding: 18px 22px;">
+  <div class="card-header" style="margin-bottom: 12px; padding-bottom: 10px;">
+    <div class="card-title">
+      <i class="fa-solid fa-vial"></i>
+      <span>Current Soil Condition Baseline</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted);" id="currentSoilSource">Source: Latest Telemetry</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; text-align: center;">
+    
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Soil pH</div>
+      <div style="font-size: 20px; font-weight: 800; color: #854d0e;" id="condPH">{{ latest.ph if latest else '6.5' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">scale</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Moisture</div>
+      <div style="font-size: 20px; font-weight: 800; color: #0284c7;" id="condMoisture">{{ latest.moisture if latest else '48.6' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">%</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Temperature</div>
+      <div style="font-size: 20px; font-weight: 800; color: #ea580c;" id="condTemp">{{ latest.temperature if latest else '34.1' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">°C</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">EC</div>
+      <div style="font-size: 20px; font-weight: 800; color: #9333ea;" id="condEC">{{ latest.ec if latest else '1500' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">µS/cm</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Nitrogen (N)</div>
+      <div style="font-size: 20px; font-weight: 800; color: #16a34a;" id="condN">{{ latest.nitrogen if latest else '32' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">mg/kg</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Phosphorus (P)</div>
+      <div style="font-size: 20px; font-weight: 800; color: #dc2626;" id="condP">{{ latest.phosphorus if latest else '37' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">mg/kg</div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Potassium (K)</div>
+      <div style="font-size: 20px; font-weight: 800; color: #4f46e5;" id="condK">{{ latest.potassium if latest else '48' }}</div>
+      <div style="font-size: 10px; color: var(--text-muted);">mg/kg</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INTERACTIVE SOIL SIMULATOR TOOLBAR -->
+<div class="card" style="background: #f0fdf4; border-color: #86efac;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+    <div>
+      <h3 style="font-size: 14px; font-weight: 700; color: #166534;">
+        <i class="fa-solid fa-sliders"></i> Interactive "What-If" Soil Simulator
+      </h3>
+      <p style="font-size: 11.5px; color: #15803d;">
+        Simulate custom soil amendments (e.g. higher moisture, adjusted pH, fertilizer application) to preview crop suitability changes.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-sm btn-outline" id="resetToLiveBtn" style="background: #ffffff;">
+        <i class="fa-solid fa-rotate-left"></i> Reset to Live Sensor
+      </button>
+      <button class="btn btn-sm btn-primary" id="runSimulationBtn">
+        <i class="fa-solid fa-play"></i> Re-calculate Suitability
+      </button>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">pH (0-14)</label>
+      <input type="number" step="0.1" id="simPH" class="form-control" value="6.5">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">Moisture (%)</label>
+      <input type="number" step="1" id="simMoisture" class="form-control" value="48.6">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">Temp (°C)</label>
+      <input type="number" step="0.5" id="simTemp" class="form-control" value="34.1">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">EC (µS/cm)</label>
+      <input type="number" step="50" id="simEC" class="form-control" value="1500">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">Nitrogen (N)</label>
+      <input type="number" step="1" id="simN" class="form-control" value="32">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">Phosphorus (P)</label>
+      <input type="number" step="1" id="simP" class="form-control" value="37">
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 600; color: #166534;">Potassium (K)</label>
+      <input type="number" step="1" id="simK" class="form-control" value="48">
+    </div>
+  </div>
+</div>
+
+<!-- RANKED CROP RECOMMENDATION CARDS -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+  <h2 style="font-size: 16px; font-weight: 700;">
+    <i class="fa-solid fa-wheat-awn" style="color: var(--primary);"></i>
+    Agronomic Suitability Rankings (Configurable Database)
+  </h2>
+  <span style="font-size: 12px; color: var(--text-muted);" id="cropCountLabel">Evaluating crops...</span>
+</div>
+
+<div class="crop-cards-grid" id="cropCardsGrid">
+  <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+    Loading crop optimization profiles...
+  </div>
+</div>
+
+<!-- TRANSPARENCY SCORE DETAILS MODAL -->
+<div class="modal" id="cropDetailModal">
+  <div class="modal-content" style="max-width: 620px;">
+    <div class="modal-header">
+      <h3 id="modalCropTitle">Crop Optimization Breakdown</h3>
+      <button class="modal-close" onclick="closeCropModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalCropBody">
+      <!-- Injected by crops.js -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeCropModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/crops.js') }}"></script>
+{% endblock %}

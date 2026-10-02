@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}API Test & Telemetry Simulator{% endblock %}
+{% block page_title %}REST API TESTER & SENSOR SIMULATOR{% endblock %}
+{% block page_subtitle %}Interactive Debug Console for ESP32 Integration, Payload Validation & DB Verification{% endblock %}
+
+{% block content %}
+
+<!-- PRESETS BAR -->
+<div class="card" style="padding: 16px 20px;">
+  <div style="font-weight: 700; font-size: 13px; margin-bottom: 10px; color: var(--text-main);">
+    <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> Quick Test Soil Presets:
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <button class="btn btn-sm btn-outline preset-btn" data-m="55.0" data-t="26.5" data-ec="1200" data-ph="6.8" data-n="55" data-p="40" data-k="60">
+      <i class="fa-solid fa-leaf" style="color: #16a34a;"></i> Ideal Loam (Optimal)
+    </button>
+    <button class="btn btn-sm btn-outline preset-btn" data-m="22.4" data-t="38.2" data-ec="850" data-ph="4.9" data-n="18" data-p="14" data-k="25">
+      <i class="fa-solid fa-sun" style="color: #ea580c;"></i> Acidic & Drought Stressed
+    </button>
+    <button class="btn btn-sm btn-outline preset-btn" data-m="68.0" data-t="31.0" data-ec="3600" data-ph="8.7" data-n="32" data-p="26" data-k="35">
+      <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> High Salinity & Alkaline
+    </button>
+    <button class="btn btn-sm btn-outline preset-btn" data-m="44.0" data-t="27.5" data-ec="420" data-ph="6.5" data-n="12" data-p="9" data-k="14">
+      <i class="fa-solid fa-battery-quarter" style="color: #ca8a04;"></i> Severe NPK Depletion
+    </button>
+  </div>
+</div>
+
+<!-- TWO-COLUMN TESTING INTERFACE -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+  
+  <!-- LEFT: PAYLOAD BUILDER & CONTROLS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>HTTP POST Request Builder</span>
+      </div>
+      <span style="font-size: 11px; font-family: monospace;">POST /api/soil-data</span>
+    </div>
+
+    <form id="apiTestForm">
+      <div class="form-group">
+        <label class="form-label" for="testApiKey">X-API-Key Header Value</label>
+        <input type="text" id="testApiKey" class="form-control" value="{{ api_key }}" style="font-family: monospace; font-size: 12px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label" for="testDeviceId">device_id</label>
+          <input type="text" id="testDeviceId" class="form-control" value="SOIL_001" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testMoisture">moisture (%)</label>
+          <input type="number" step="0.1" id="testMoisture" class="form-control" value="48.6" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label" for="testTemp">temperature (°C)</label>
+          <input type="number" step="0.1" id="testTemp" class="form-control" value="34.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testEC">ec (µS/cm)</label>
+          <input type="number" step="1" id="testEC" class="form-control" value="1500" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label" for="testPH">ph (scale 0-14)</label>
+          <input type="number" step="0.1" id="testPH" class="form-control" value="6.5" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testN">nitrogen (mg/kg)</label>
+          <input type="number" step="1" id="testN" class="form-control" value="32" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label" for="testP">phosphorus (mg/kg)</label>
+          <input type="number" step="1" id="testP" class="form-control" value="37" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testK">potassium (mg/kg)</label>
+          <input type="number" step="1" id="testK" class="form-control" value="48" required>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button type="button" class="btn btn-primary" id="sendTestDataBtn" style="flex: 1;">
+          <i class="fa-solid fa-paper-plane"></i> SEND TEST DATA
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" id="sendMalformedBtn" title="Test server rejection of invalid types">
+          Test Invalid NaN
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- RIGHT: RESPONSE & DATABASE VERIFICATION -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-code"></i>
+        <span>API Response & Database Verification</span>
+      </div>
+      <span id="responseStatusBadge" class="badge badge-normal" style="display: none;">HTTP 200</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
+      <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px; text-align: center;">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">HTTP Status</div>
+        <strong id="respHttpStatus" style="font-size: 16px;">--</strong>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px; text-align: center;">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Roundtrip Latency</div>
+        <strong id="respLatency" style="font-size: 16px;">-- ms</strong>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: 8px; padding: 10px; text-align: center;">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">DB Insertion</div>
+        <strong id="respDbStatus" style="font-size: 16px;">--</strong>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Outgoing JSON Payload</label>
+      <pre id="outgoingPayloadViewer" style="background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 8px; font-size: 11.5px; font-family: monospace; max-height: 140px; overflow-y: auto;">Awaiting trigger...</pre>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Server Response JSON Body</label>
+      <pre id="responseBodyViewer" style="background: #0f172a; color: #4ade80; padding: 12px; border-radius: 8px; font-size: 11.5px; font-family: monospace; max-height: 180px; overflow-y: auto;">Awaiting server response...</pre>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('testMoisture').value = btn.dataset.m;
+        document.getElementById('testTemp').value = btn.dataset.t;
+        document.getElementById('testEC').value = btn.dataset.ec;
+        document.getElementById('testPH').value = btn.dataset.ph;
+        document.getElementById('testN').value = btn.dataset.n;
+        document.getElementById('testP').value = btn.dataset.p;
+        document.getElementById('testK').value = btn.dataset.k;
+      });
+    });
+
+    document.getElementById('sendTestDataBtn').addEventListener('click', sendTestPacket);
+    document.getElementById('sendMalformedBtn').addEventListener('click', sendMalformedPacket);
+  });
+
+  async function sendTestPacket() {
+    const payload = {
+      device_id: document.getElementById('testDeviceId').value,
+      moisture: parseFloat(document.getElementById('testMoisture').value),
+      temperature: parseFloat(document.getElementById('testTemp').value),
+      ec: parseFloat(document.getElementById('testEC').value),
+      ph: parseFloat(document.getElementById('testPH').value),
+      nitrogen: parseFloat(document.getElementById('testN').value),
+      phosphorus: parseFloat(document.getElementById('testP').value),
+      potassium: parseFloat(document.getElementById('testK').value),
+      is_simulated: true
+    };
+
+    executePost(payload);
+  }
+
+  async function sendMalformedPacket() {
+    // Deliberately malformed payload with invalid string in numeric field to test validation rejection
+    const malformed = {
+      device_id: "SOIL_001",
+      moisture: "INVALID_STRING_VALUE",
+      temperature: null,
+      ec: 1500,
+      ph: 6.5,
+      nitrogen: 32,
+      phosphorus: 37,
+      potassium: 48
+    };
+
+    executePost(malformed);
+  }
+
+  async function executePost(payload) {
+    const apiKey = document.getElementById('testApiKey').value;
+    const outViewer = document.getElementById('outgoingPayloadViewer');
+    const respViewer = document.getElementById('responseBodyViewer');
+    const statusBadge = document.getElementById('responseStatusBadge');
+
+    outViewer.textContent = JSON.stringify(payload, null, 2);
+    respViewer.textContent = "Sending request to /api/soil-data...";
+
+    const tStart = performance.now();
+
+    try {
+      const res = await fetch('/api/soil-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const tEnd = performance.now();
+      const latencyMs = Math.round(tEnd - tStart);
+      const json = await res.json();
+
+      document.getElementById('respHttpStatus').textContent = res.status;
+      document.getElementById('respLatency').textContent = `${latencyMs} ms`;
+
+      statusBadge.style.display = 'inline-block';
+      statusBadge.textContent = `HTTP ${res.status}`;
+
+      if (res.ok) {
+        statusBadge.className = 'badge badge-normal';
+        document.getElementById('respDbStatus').textContent = "STORED (ID: " + json.id + ")";
+        document.getElementById('respDbStatus').style.color = "#16a34a";
+        respViewer.style.color = "#4ade80";
+      } else {
+        statusBadge.className = 'badge badge-critical';
+        document.getElementById('respDbStatus').textContent = "REJECTED";
+        document.getElementById('respDbStatus').style.color = "#dc2626";
+        respViewer.style.color = "#f87171";
+      }
+
+      respViewer.textContent = JSON.stringify(json, null, 2);
+
+    } catch (e) {
+      document.getElementById('respHttpStatus').textContent = "ERROR";
+      document.getElementById('respDbStatus').textContent = "FAILED";
+      respViewer.textContent = "Network Error: " + e.message;
+      respViewer.style.color = "#f87171";
+    }
+  }
+</script>
+{% endblock %}

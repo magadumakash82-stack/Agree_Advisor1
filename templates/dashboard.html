@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}Main Dashboard{% endblock %}
+{% block page_title %}SMART SOIL MONITORING DASHBOARD{% endblock %}
+{% block page_subtitle %}Real-time 7-in-1 Telemetry, Agronomic Health Assessment & Crop Optimization{% endblock %}
+
+{% block content %}
+
+<!-- TOP SYSTEM TELEMETRY SUMMARY CARDS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+      <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Active Device</span>
+      <i class="fa-solid fa-microchip" style="color: var(--primary);"></i>
+    </div>
+    <div style="font-size: 18px; font-weight: 800;" id="topDeviceId">{{ latest.device_id if latest else 'SOIL_001' }}</div>
+    <div style="font-size: 11px; color: var(--text-muted);" id="topDeviceLoc">Plot A - North Sector</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+      <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Sensor State</span>
+      <span class="indicator-dot offline" id="topSensorDot"></span>
+    </div>
+    <div style="font-size: 18px; font-weight: 800;" id="topSensorStatus">CHECKING</div>
+    <div style="font-size: 11px; color: var(--text-muted);">RS485 Modbus RTU</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+      <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Soil Health Index</span>
+      <i class="fa-solid fa-heart-pulse" style="color: #16a34a;"></i>
+    </div>
+    <div style="font-size: 18px; font-weight: 800; color: #15803d;" id="topHealthIndex">-- %</div>
+    <div style="font-size: 11px; color: var(--text-muted);" id="topHealthLabel">Analyzing...</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+      <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Last Telemetry</span>
+      <i class="fa-regular fa-clock" style="color: var(--text-muted);"></i>
+    </div>
+    <div style="font-size: 18px; font-weight: 800;" id="topLastUpdated">Waiting...</div>
+    <div style="font-size: 11px; color: var(--text-muted);" id="topExactTime">No packets</div>
+  </div>
+
+</div>
+
+<!-- 7 LARGE SOIL PARAMETER CARDS (SECTION 7 REQUIREMENT) -->
+<h2 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+  <span><i class="fa-solid fa-layer-group" style="color: var(--primary); margin-right: 8px;"></i> 7-in-1 Soil Parameters</span>
+  <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);" id="pollingCounter">Auto-refreshing in 5s</span>
+</h2>
+
+<div class="params-grid">
+  
+  <!-- CARD 1: MOISTURE -->
+  <div class="param-card" id="cardMoisture">
+    <div class="param-card-top">
+      <span class="param-name">Soil Moisture</span>
+      <div class="param-icon icon-moisture"><i class="fa-solid fa-droplet"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valMoisture">--</span>
+      <span class="param-unit">%</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgeMoisture">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendMoisture">
+        <i class="fa-solid fa-minus"></i> 0.0%
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timeMoisture">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 2: TEMPERATURE -->
+  <div class="param-card" id="cardTemperature">
+    <div class="param-card-top">
+      <span class="param-name">Temperature</span>
+      <div class="param-icon icon-temperature"><i class="fa-solid fa-temperature-half"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valTemperature">--</span>
+      <span class="param-unit">°C</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgeTemperature">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendTemperature">
+        <i class="fa-solid fa-minus"></i> 0.0°
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timeTemperature">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 3: ELECTRICAL CONDUCTIVITY (EC) -->
+  <div class="param-card" id="cardEC">
+    <div class="param-card-top">
+      <span class="param-name">Electrical Cond. (EC)</span>
+      <div class="param-icon icon-ec"><i class="fa-solid fa-bolt"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valEC">--</span>
+      <span class="param-unit">µS/cm</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgeEC">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendEC">
+        <i class="fa-solid fa-minus"></i> 0
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timeEC">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 4: PH -->
+  <div class="param-card" id="cardPH">
+    <div class="param-card-top">
+      <span class="param-name">Soil pH</span>
+      <div class="param-icon icon-ph"><i class="fa-solid fa-flask-vial"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valPH">--</span>
+      <span class="param-unit">pH scale</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgePH">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendPH">
+        <i class="fa-solid fa-minus"></i> 0.0
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timePH">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 5: NITROGEN -->
+  <div class="param-card" id="cardNitrogen">
+    <div class="param-card-top">
+      <span class="param-name">Nitrogen (N)</span>
+      <div class="param-icon icon-nitrogen"><i class="fa-solid fa-plant-wilt"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valNitrogen">--</span>
+      <span class="param-unit">mg/kg</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgeNitrogen">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendNitrogen">
+        <i class="fa-solid fa-minus"></i> 0
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timeNitrogen">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 6: PHOSPHORUS -->
+  <div class="param-card" id="cardPhosphorus">
+    <div class="param-card-top">
+      <span class="param-name">Phosphorus (P)</span>
+      <div class="param-icon icon-phosphorus"><i class="fa-solid fa-seedling"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valPhosphorus">--</span>
+      <span class="param-unit">mg/kg</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgePhosphorus">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendPhosphorus">
+        <i class="fa-solid fa-minus"></i> 0
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timePhosphorus">--</span>
+    </div>
+  </div>
+
+  <!-- CARD 7: POTASSIUM -->
+  <div class="param-card" id="cardPotassium">
+    <div class="param-card-top">
+      <span class="param-name">Potassium (K)</span>
+      <div class="param-icon icon-potassium"><i class="fa-solid fa-tree"></i></div>
+    </div>
+    <div class="param-value-wrap">
+      <span class="param-value" id="valPotassium">--</span>
+      <span class="param-unit">mg/kg</span>
+    </div>
+    <div class="param-card-bottom">
+      <span class="badge badge-normal" id="badgePotassium">NORMAL</span>
+      <span class="trend-indicator trend-stable" id="trendPotassium">
+        <i class="fa-solid fa-minus"></i> 0
+      </span>
+      <span style="color: var(--text-light); font-size: 10px;" id="timePotassium">--</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- TWO COLUMN LOWER SECTION: CROP RECOMMENDATION TEASER & REAL-TIME ALERTS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+  
+  <!-- CROP SUITABILITY HIGHLIGHTS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-wheat-awn"></i>
+        <span>Crop Suitability Recommendations</span>
+      </div>
+      <a href="{{ url_for('web.crops') }}" class="btn btn-sm btn-outline">View All Crops &rarr;</a>
+    </div>
+    <div id="topCropsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+        Evaluating crop suitability based on latest readings...
+      </div>
+    </div>
+    <div style="margin-top: 14px; font-size: 11px; color: var(--text-muted); font-style: italic;">
+      Indicative recommendation based on entered/measured soil parameters.
+    </div>
+  </div>
+
+  <!-- SOIL HEALTH & AGRONOMIC ALERTS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-bell"></i>
+        <span>Agronomic Health Alerts & Guidance</span>
+      </div>
+      <a href="{{ url_for('web.report') }}" class="btn btn-sm btn-outline">Full Report &rarr;</a>
+    </div>
+    <div id="alertsContainer" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto;">
+      <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+        No critical soil alerts. All readings within nominal limits.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RECENT READINGS QUICK CHART -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Recent Soil Telemetry Trend</span>
+    </div>
+    <a href="{{ url_for('web.history') }}" class="btn btn-sm btn-outline">Advanced Historical Charts &rarr;</a>
+  </div>
+  <div style="height: 260px; position: relative;">
+    <canvas id="quickTrendChart"></canvas>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

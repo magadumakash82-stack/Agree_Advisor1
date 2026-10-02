@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Sensor Device Management{% endblock %}
+{% block page_title %}IOT SENSOR & DEVICE MANAGEMENT{% endblock %}
+{% block page_subtitle %}Register, Monitor Telemetry Health and Manage Connected ESP32 Nodes{% endblock %}
+
+{% block content %}
+
+<!-- CONTROLS & ADD DEVICE BAR -->
+<div class="card" style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <strong>Active Telemetry Network:</strong>
+    <span style="font-size: 13px; color: var(--text-muted); margin-left: 6px;">
+      Configured Offline Timeout Threshold: <strong>{{ timeout }} seconds</strong>
+    </span>
+  </div>
+
+  <button class="btn btn-sm btn-primary" onclick="openNewDeviceModal()">
+    <i class="fa-solid fa-plus"></i> Register New Device
+  </button>
+</div>
+
+<!-- DEVICE REGISTRY TABLE -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-microchip"></i>
+      <span>Registered IoT Nodes & Field Probes</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted);">{{ devices|length }} Devices in Database</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Device ID</th>
+          <th>Device Name</th>
+          <th>Farm Location</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Last Seen</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="deviceTableBody">
+        {% for dev in devices %}
+          {% set is_on = dev.is_online(timeout) %}
+          <tr>
+            <td><code><strong>{{ dev.device_id }}</strong></code></td>
+            <td><strong>{{ dev.device_name }}</strong></td>
+            <td>{{ dev.location }}</td>
+            <td style="font-size: 12px; color: var(--text-muted);">{{ dev.description or 'Standard 7-in-1 Sensor' }}</td>
+            <td>
+              {% if is_on %}
+                <span class="badge badge-normal"><i class="fa-solid fa-circle" style="font-size: 7px; margin-right: 4px;"></i> ONLINE</span>
+              {% else %}
+                <span class="badge badge-critical"><i class="fa-solid fa-circle" style="font-size: 7px; margin-right: 4px;"></i> OFFLINE</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if dev.last_seen %}
+                {{ dev.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}
+              {% else %}
+                <span style="color: var(--text-muted); font-style: italic;">Never connected</span>
+              {% endif %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="sendTestPacketForDevice('{{ dev.device_id }}')" title="Simulate reading for this device">
+                <i class="fa-solid fa-vial"></i> Test Ping
+              </button>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              No IoT devices registered yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- NEW DEVICE MODAL -->
+<div class="modal" id="newDeviceModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Register New IoT Sensor</h3>
+      <button class="modal-close" onclick="closeNewDeviceModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="newDeviceForm">
+        <div class="form-group">
+          <label class="form-label" for="newDeviceId">Device ID (Hardware Identifier)</label>
+          <input type="text" id="newDeviceId" class="form-control" placeholder="e.g. SOIL_002" required>
+          <small style="color: var(--text-muted); font-size: 11px;">Must match the <code>DEVICE_ID</code> configured in your ESP32 Arduino sketch.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newDeviceName">Device Name</label>
+          <input type="text" id="newDeviceName" class="form-control" placeholder="e.g. East Greenhouse Sensor" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newDeviceLocation">Physical Farm Location</label>
+          <input type="text" id="newDeviceLocation" class="form-control" placeholder="e.g. Block C, Plot 4">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newDeviceDescription">Description / Notes</label>
+          <textarea id="newDeviceDescription" class="form-control" rows="2" placeholder="e.g. Sandy loam trial patch"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeNewDeviceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitNewDevice()">Register Device</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function openNewDeviceModal() {
+    document.getElementById('newDeviceModal').classList.add('active');
+  }
+
+  function closeNewDeviceModal() {
+    document.getElementById('newDeviceModal').classList.remove('active');
+  }
+
+  async function submitNewDevice() {
+    const id = document.getElementById('newDeviceId').value.trim();
+    const name = document.getElementById('newDeviceName').value.trim();
+    const loc = document.getElementById('newDeviceLocation').value.trim();
+    const desc = document.getElementById('newDeviceDescription').value.trim();
+
+    if (!id || !name) {
+      alert("Please provide both Device ID and Device Name.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, device_name: name, location: loc, description: desc })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        closeNewDeviceModal();
+        window.location.reload();
+      } else {
+        alert(data.message || "Failed to register device.");
+      }
+    } catch (e) {
+      alert("Network error while registering device.");
+    }
+  }
+
+  async function sendTestPacketForDevice(deviceId) {
+    try {
+      const res = await fetch('/api/soil-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: deviceId,
+          moisture: 52.4,
+          temperature: 29.8,
+          ec: 1350,
+          ph: 6.7,
+          nitrogen: 38,
+          phosphorus: 32,
+          potassium: 45,
+          is_simulated: true
+        })
+      });
+      if (res.ok) {
+        alert(`Test ping successful for ${deviceId}! Device is now marked ONLINE.`);
+        window.location.reload();
+      }
+    } catch (e) {
+      alert("Error sending test packet.");
+    }
+  }
+</script>
+{% endblock %}

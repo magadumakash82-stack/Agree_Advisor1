@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}ESP32 Hardware & Sensor Integration{% endblock %}
+{% block page_title %}ESP32 HARDWARE INTEGRATION & WIRING GUIDE{% endblock %}
+{% block page_subtitle %}Modbus RTU over RS485, MAX485 Transceiver Interface & Network Setup{% endblock %}
+
+{% block content %}
+
+<!-- ARCHITECTURE FLOW BANNER (SECTION 20 REQUIREMENT) -->
+<div class="card" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #ffffff;">
+  <div style="font-weight: 700; font-size: 13px; color: #86efac; text-transform: uppercase; margin-bottom: 8px;">
+    System End-to-End IoT Pipeline
+  </div>
+  <div style="font-family: monospace; font-size: 13px; line-height: 1.8; color: #e2e8f0; overflow-x: auto;">
+    7-in-1 Soil Sensor &rarr; RS485 (A/B) &rarr; MAX485 Module &rarr; UART2 (GPIO16/17) &rarr; ESP32 &rarr; Wi-Fi &rarr; Flask REST API (/api/soil-data) &rarr; SQLite DB &rarr; Web Dashboard &rarr; Crop Optimization Engine
+  </div>
+</div>
+
+<!-- HARDWARE PINOUT TABLE (SECTION 21 & 36 REQUIREMENT) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-diagram-project"></i>
+      <span>Hardware Wiring Specification</span>
+    </div>
+    <span class="badge badge-normal">Standard TTL to RS485</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Module / Component</th>
+          <th>Sensor / Transceiver Pin</th>
+          <th>ESP32 / System Connection</th>
+          <th>Electrical Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>7-in-1 Sensor Power</strong></td>
+          <td>VCC (Brown / Red)</td>
+          <td><strong>External DC Power (9V - 24V)</strong></td>
+          <td>Soil probes demand 9-24V DC. <em>Do not power from ESP32 3.3V pin!</em></td>
+        </tr>
+        <tr>
+          <td><strong>7-in-1 Sensor Ground</strong></td>
+          <td>GND (Black)</td>
+          <td><strong>Common External GND + ESP32 GND</strong></td>
+          <td>Ground reference must be shared across all modules to avoid floating voltages.</td>
+        </tr>
+        <tr>
+          <td><strong>Modbus Differential A</strong></td>
+          <td>RS485 A (Yellow / Green)</td>
+          <td><strong>MAX485 Pin 'A'</strong></td>
+          <td>Non-inverting RS485 differential data line.</td>
+        </tr>
+        <tr>
+          <td><strong>Modbus Differential B</strong></td>
+          <td>RS485 B (Blue / White)</td>
+          <td><strong>MAX485 Pin 'B'</strong></td>
+          <td>Inverting RS485 differential data line.</td>
+        </tr>
+        <tr>
+          <td><strong>MAX485 Power</strong></td>
+          <td>VCC &amp; GND</td>
+          <td><strong>ESP32 5V (or 3.3V) &amp; GND</strong></td>
+          <td>Powers the transceiver IC. Check module operating voltage.</td>
+        </tr>
+        <tr>
+          <td><strong>MAX485 Receiver Out (RO)</strong></td>
+          <td>RO</td>
+          <td><strong>ESP32 GPIO 16 (UART2 RX)</strong></td>
+          <td>Receives serial bytes from sensor into ESP32 hardware UART2.</td>
+        </tr>
+        <tr>
+          <td><strong>MAX485 Driver In (DI)</strong></td>
+          <td>DI</td>
+          <td><strong>ESP32 GPIO 17 (UART2 TX)</strong></td>
+          <td>Transmits Modbus query commands from ESP32 to sensor.</td>
+        </tr>
+        <tr>
+          <td><strong>MAX485 Flow Control</strong></td>
+          <td>DE &amp; RE (Tied Together)</td>
+          <td><strong>ESP32 GPIO 4</strong></td>
+          <td>HIGH = Transmit Query Mode; LOW = Receive Sensor Response Mode.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- NETWORK & SERVER CONFIGURATION WARNING (SECTION 22 REQUIREMENT) -->
+<div class="card" style="border-left: 4px solid #ea580c;">
+  <div class="card-header">
+    <div class="card-title" style="color: #c2410c;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>Crucial Network Requirement: Do NOT Use "localhost" in ESP32</span>
+    </div>
+  </div>
+  <p style="font-size: 13px; color: var(--text-main); margin-bottom: 10px;">
+    The ESP32 is an independent device on your local Wi-Fi router. If you configure <code>http://localhost:5000</code> in your ESP32 code, the ESP32 will attempt to connect to itself and fail.
+  </p>
+  <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 14px; font-size: 12.5px;">
+    <strong>Step 1:</strong> Open PowerShell or Command Prompt on Windows.<br>
+    <strong>Step 2:</strong> Run <code>ipconfig</code> and note your <strong>IPv4 Address</strong> (e.g. <code>192.168.1.105</code>).<br>
+    <strong>Step 3:</strong> Configure the Arduino sketch with your PC IP address:
+    <div style="margin-top: 6px;">
+      <code>const char* SERVER_URL = "http://192.168.1.105:5000/api/soil-data";</code>
+    </div>
+  </div>
+</div>
+
+<!-- MODBUS REGISTER MAPPING WARNING (SECTION 3 & 36 REQUIREMENT) -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-list-ol"></i>
+      <span>Modbus Register Map Customization</span>
+    </div>
+  </div>
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+    Different 7-in-1 sensor manufacturers use different starting register maps. The included firmware provides a centralized configuration section at the top of <code>smart_soil_esp32.ino</code>:
+  </p>
+  <div style="background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 12px;">
+<pre>// Common Type A: Sequential 7 registers starting at 0x0000
+const uint16_t MODBUS_START_REGISTER = 0x0000;
+const uint16_t MODBUS_REGISTER_COUNT = 0x0007;
+
+// Common Type B: Starting at 0x001E
+// const uint16_t MODBUS_START_REGISTER = 0x001E;
+// const uint16_t MODBUS_REGISTER_COUNT = 0x0007;</pre>
+  </div>
+</div>
+
+<!-- ARDUINO SKETCH LOCATION & CODE SNIPPET -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-file-code"></i>
+      <span>Arduino Sketch Firmware (smart_soil_esp32.ino)</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted);">Located in: <code>esp32/smart_soil_esp32.ino</code></span>
+  </div>
+  <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">
+    Open the Arduino IDE, select <strong>ESP32 Dev Module</strong> as your target board, and upload the sketch.
+  </p>
+  <div style="background: #0f172a; color: #a7f3d0; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 11.5px; max-height: 250px; overflow-y: auto;">
+<pre>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+
+const char* WIFI_SSID       = "YOUR_WIFI_SSID";
+const char* WIFI_PASSWORD   = "YOUR_WIFI_PASSWORD";
+const char* SERVER_URL      = "http://192.168.1.100:5000/api/soil-data";
+const char* API_KEY         = "{{ api_key }}";
+const char* DEVICE_ID       = "SOIL_001";
+
+#define RS485_RX_PIN        16      // RO &rarr; GPIO16
+#define RS485_TX_PIN        17      // DI &rarr; GPIO17
+#define RS485_DE_RE_PIN     4       // DE+RE &rarr; GPIO4
+#define RS485_BAUD_RATE     9600
+#define SENSOR_SLAVE_ID     0x01</pre>
+  </div>
+</div>
+
+{% endblock %}

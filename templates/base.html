@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ session.get('theme', 'system') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard{% endblock %} - AgriAdvisor</title>
+  
+  <!-- Instant Theme Script to avoid flash of white/dark -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('smart_soil_theme') || "{{ session.get('theme', 'system') }}";
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  <!-- Modern Inter Font & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js 4.4.2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Application CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div>
+          <div class="brand-title">AgriAdvisor</div>
+          <div class="brand-subtitle">Soil &amp; Crop Intelligence</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Telemetry &amp; Insights</div>
+        <a href="{{ url_for('web.dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Main Dashboard</span>
+        </a>
+        <a href="{{ url_for('web.live') }}" class="nav-item {% if active_page == 'live' %}active{% endif %}">
+          <i class="fa-solid fa-wave-square"></i>
+          <span>Live Monitoring</span>
+        </a>
+        <a href="{{ url_for('web.history') }}" class="nav-item {% if active_page == 'history' %}active{% endif %}">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Soil History</span>
+        </a>
+        <a href="{{ url_for('web.crops') }}" class="nav-item {% if active_page == 'crops' %}active{% endif %}">
+          <i class="fa-solid fa-wheat-awn"></i>
+          <span>Crop Optimization</span>
+        </a>
+        <a href="{{ url_for('web.report') }}" class="nav-item {% if active_page == 'report' %}active{% endif %}">
+          <i class="fa-solid fa-file-invoice"></i>
+          <span>Soil Health Report</span>
+        </a>
+
+        <div class="nav-section-title">Hardware &amp; Integration</div>
+        <a href="{{ url_for('web.devices') }}" class="nav-item {% if active_page == 'devices' %}active{% endif %}">
+          <i class="fa-solid fa-microchip"></i>
+          <span>Device Management</span>
+        </a>
+        <a href="{{ url_for('web.test_api') }}" class="nav-item {% if active_page == 'test_api' %}active{% endif %}">
+          <i class="fa-solid fa-vial-circle-check"></i>
+          <span>Test API / Simulator</span>
+        </a>
+        <a href="{{ url_for('web.esp32_setup') }}" class="nav-item {% if active_page == 'esp32_setup' %}active{% endif %}">
+          <i class="fa-solid fa-book-open"></i>
+          <span>ESP32 Hardware Guide</span>
+        </a>
+
+        <div class="nav-section-title">User &amp; Settings</div>
+        <a href="{{ url_for('web.profile') }}" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+          <i class="fa-solid fa-user"></i>
+          <span>My Profile</span>
+        </a>
+        <a href="{{ url_for('web.notifications') }}" class="nav-item {% if active_page == 'notifications' %}active{% endif %}">
+          <i class="fa-solid fa-bell"></i>
+          <span>Notifications</span>
+        </a>
+        <a href="{{ url_for('web.settings') }}" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+          <i class="fa-solid fa-sliders"></i>
+          <span>System Settings</span>
+        </a>
+
+        {% if session.get('role') == 'ADMIN' %}
+          <div class="nav-section-title">Administration</div>
+          <a href="{{ url_for('web.admin') }}" class="nav-item {% if active_page == 'admin' %}active{% endif %}" style="color: #4ade80;">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Admin Console</span>
+          </a>
+        {% endif %}
+
+        <div class="nav-section-title">Information</div>
+        <a href="{{ url_for('web.about') }}" class="nav-item {% if active_page == 'about' %}active{% endif %}">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>About Project</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="{{ url_for('web.profile') }}" class="user-badge" style="text-decoration: none; color: inherit;">
+          {% if session.get('profile_picture') %}
+            <img src="{{ session.get('profile_picture') }}" alt="Avatar" class="user-avatar" style="object-fit: cover;">
+          {% else %}
+            <div class="user-avatar">{{ session.get('initials', 'RP') }}</div>
+          {% endif %}
+          <div style="overflow: hidden;">
+            <div class="user-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">
+              {{ session.get('name', 'User') }}
+            </div>
+            <div class="user-role">{{ session.get('role', 'USER') }}</div>
+          </div>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sign Out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="app-main">
+      
+      <!-- TOP NAVIGATION & STATUS HEADER -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="header-left">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="page-title-wrap">
+              <h1>{% block page_title %}Smart Soil Monitoring{% endblock %}</h1>
+              <p>{% block page_subtitle %}IoT-Based Soil Monitoring, Analysis and Crop Suitability Platform{% endblock %}</p>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            
+            <!-- Quick Theme Switcher Button (☀️ / 🌙) (Section 12) -->
+            <button class="header-action-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+              <i class="fa-solid fa-circle-half-stroke" id="themeToggleIcon"></i>
+            </button>
+
+            <!-- Notification Bell with Counter & Dropdown Panel (Section 14) -->
+            <div style="position: relative;">
+              <button class="header-action-btn" id="notifBellBtn" title="View Notifications" aria-label="Notifications">
+                <i class="fa-regular fa-bell"></i>
+                <span class="notif-counter-badge" id="topNotifCount" style="display: none;">0</span>
+              </button>
+
+              <!-- Notifications Popover Panel -->
+              <div class="notif-popover-panel" id="topNotifPanel">
+                <div class="notif-panel-header">
+                  <div style="font-weight: 700; font-size: 13px;">Notifications</div>
+                  <button class="btn btn-sm btn-outline" style="padding: 2px 8px; font-size: 11px;" id="panelMarkAllReadBtn">
+                    Mark all read
+                  </button>
+                </div>
+                <div class="notif-panel-items" id="topNotifList">
+                  <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">
+                    No unread notifications
+                  </div>
+                </div>
+                <div class="notif-panel-footer">
+                  <a href="{{ url_for('web.notifications') }}" style="font-size: 12px; font-weight: 600; color: var(--primary); text-decoration: none;">
+                    View All Notifications &rarr;
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Demo Mode Toggle Button -->
+            <button class="btn btn-sm btn-outline" id="globalDemoToggleBtn" title="Toggle Simulated Demo Telemetry">
+              <i class="fa-solid fa-flask"></i>
+              <span id="demoBtnText">Demo Mode</span>
+            </button>
+            
+            <!-- User Profile Dropdown Menu (Section 6) -->
+            <div class="profile-menu-container">
+              <button class="profile-trigger-btn" id="profileTriggerBtn" aria-label="User account menu">
+                {% if session.get('profile_picture') %}
+                  <img src="{{ session.get('profile_picture') }}" alt="Avatar" class="profile-trigger-avatar">
+                {% else %}
+                  <div class="profile-trigger-avatar">{{ session.get('initials', 'RP') }}</div>
+                {% endif %}
+                <span class="profile-trigger-name" id="topUserDropdownName">{{ session.get('name', 'User') }}</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: var(--text-muted); margin-left: 2px;"></i>
+              </button>
+
+              <!-- Dropdown Menu Popover -->
+              <div class="dropdown-menu-popover" id="profileDropdownPopover">
+                <div class="dropdown-user-header">
+                  <div class="dropdown-user-name">{{ session.get('name', 'User') }}</div>
+                  <div class="dropdown-user-email">{{ session.get('email', '') }}</div>
+                </div>
+                <div class="dropdown-links-list">
+                  <a href="{{ url_for('web.profile') }}" class="dropdown-item-link">
+                    <i class="fa-solid fa-user"></i> Profile
+                  </a>
+                  <a href="{{ url_for('web.settings') }}" class="dropdown-item-link">
+                    <i class="fa-solid fa-sliders"></i> Settings
+                  </a>
+                  <a href="{{ url_for('web.notifications') }}" class="dropdown-item-link">
+                    <i class="fa-solid fa-bell"></i> Notifications
+                  </a>
+                  {% if session.get('role') == 'ADMIN' %}
+                    <a href="{{ url_for('web.admin') }}" class="dropdown-item-link" style="color: #16a34a;">
+                      <i class="fa-solid fa-shield-halved"></i> Admin Console
+                    </a>
+                  {% endif %}
+                  <a href="{{ url_for('auth.logout') }}" class="dropdown-item-link logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TOP REAL-TIME STATUS BAR -->
+        <div class="system-status-bar">
+          <div class="status-pills-row">
+            <div class="status-pill">
+              <span class="indicator-dot offline" id="statusDotESP32"></span>
+              <span>ESP32: <strong id="statusTextESP32">CHECKING</strong></span>
+            </div>
+
+            <div class="status-pill">
+              <span class="indicator-dot offline" id="statusDotWiFi"></span>
+              <span>Wi-Fi: <strong id="statusTextWiFi">CHECKING</strong></span>
+            </div>
+
+            <div class="status-pill">
+              <span class="indicator-dot online" id="statusDotAPI"></span>
+              <span>API: <strong id="statusTextAPI">ONLINE</strong></span>
+            </div>
+
+            <div class="status-pill">
+              <span class="indicator-dot online" id="statusDotDB"></span>
+              <span>DATABASE: <strong id="statusTextDB">CONNECTED</strong></span>
+            </div>
+
+            <div class="status-pill">
+              <span class="indicator-dot offline" id="statusDotSensor"></span>
+              <span>SENSOR: <strong id="statusTextSensor">CHECKING</strong></span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="telemetrySourceBadge" class="badge-live">LIVE SENSOR DATA</span>
+            <span style="color: var(--text-muted); font-size: 11px;">
+              <i class="fa-regular fa-clock"></i> Last sync: <span id="lastSyncText">Connecting...</span>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- FLASH MESSAGES -->
+      <div class="page-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                  <span>{{ message }}</span>
+                  <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;font-weight:bold;">&times;</button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- PAGE BODY BLOCK -->
+        {% block content %}{% endblock %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ONBOARDING MODAL (SECTION 23 REQUIREMENT) -->
+  {% if session.get('show_onboarding') %}
+  <div class="modal active" id="onboardingModal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-hand-holding-heart" style="color: var(--primary);"></i> Complete Your Farm Profile</h3>
+        <button class="modal-close" onclick="closeOnboardingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Welcome to the Smart Soil System! To personalize irrigation alerts and crop recommendations, please provide your contact and location details (optional).
+        </p>
+
+        <form id="onboardingForm">
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="tel" id="obMobile" class="form-control" placeholder="e.g. +91 9876543210">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Farm Street Address</label>
+            <input type="text" id="obAddress" class="form-control" placeholder="e.g. Survey No. 42">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">City / Village</label>
+              <input type="text" id="obCity" class="form-control" placeholder="e.g. Belagavi">
+            </div>
+            <div class="form-group">
+              <label class="form-label">State</label>
+              <input type="text" id="obState" class="form-control" placeholder="e.g. Karnataka">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" id="obCountry" class="form-control" value="India">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pincode</label>
+              <input type="text" id="obPincode" class="form-control" placeholder="e.g. 591201">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeOnboardingModal()">Skip for now</button>
+        <button class="btn btn-primary" onclick="submitOnboarding()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Shared Global Telemetry & Interactivity Script -->
+  <script>
+    // Theme Management
+    window.applyThemeMode = function(mode) {
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem('smart_soil_theme', mode);
+    };
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const curr = document.documentElement.getAttribute('data-theme') || 'system';
+        const next = curr === 'dark' ? 'light' : 'dark';
+        window.applyThemeMode(next);
+        fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: next })
+        }).catch(e => console.warn(e));
+      });
+    }
+
+    // Dropdown Toggles
+    const profileBtn = document.getElementById('profileTriggerBtn');
+    const profilePopover = document.getElementById('profileDropdownPopover');
+    if (profileBtn && profilePopover) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profilePopover.classList.toggle('active');
+        if (notifPanel) notifPanel.classList.remove('active');
+      });
+    }
+
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    const notifPanel = document.getElementById('topNotifPanel');
+    if (notifBellBtn && notifPanel) {
+      notifBellBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifPanel.classList.toggle('active');
+        if (profilePopover) profilePopover.classList.remove('active');
+        fetchTopNotifications();
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (profilePopover) profilePopover.classList.remove('active');
+      if (notifPanel) notifPanel.classList.remove('active');
+    });
+
+    // Mobile Sidebar Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const appSidebar = document.getElementById('appSidebar');
+    if (mobileMenuBtn && appSidebar) {
+      mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+      });
+    }
+
+    // Top Notification Bell Updater
+    async function fetchTopNotifications() {
+      try {
+        const res = await fetch('/api/notifications');
+        if (!res.ok) return;
+        const data = await res.json();
+        const unreadCount = data.unread_count || 0;
+
+        const countBadge = document.getElementById('topNotifCount');
+        if (countBadge) {
+          if (unreadCount > 0) {
+            countBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            countBadge.style.display = 'flex';
+          } else {
+            countBadge.style.display = 'none';
+          }
+        }
+
+        const listContainer = document.getElementById('topNotifList');
+        if (listContainer && data.items) {
+          if (data.items.length === 0) {
+            listContainer.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">No notifications yet</div>';
+            return;
+          }
+          let html = '';
+          data.items.slice(0, 5).forEach(item => {
+            html += `
+              <div class="notif-panel-item" style="background:${item.is_read ? 'transparent' : 'var(--accent-soft)'};">
+                <i class="fa-solid fa-circle-dot" style="color:${item.is_read ? 'var(--text-light)' : '#ef4444'}; font-size:10px; margin-top:3px;"></i>
+                <div style="flex:1;">
+                  <strong style="color:var(--text-main); font-size:12px;">${item.title}</strong>
+                  <div style="color:var(--text-muted); font-size:11px; margin-top:2px;">${item.message}</div>
+                  <div style="color:var(--text-light); font-size:10px; margin-top:2px;">${item.formatted_time}</div>
+                </div>
+              </div>
+            `;
+          });
+          listContainer.innerHTML = html;
+        }
+      } catch (e) {
+        console.warn("Notifications fetch error:", e);
+      }
+    }
+    window.updateTopNotificationBell = fetchTopNotifications;
+    fetchTopNotifications();
+
+    const markAllReadBtn = document.getElementById('panelMarkAllReadBtn');
+    if (markAllReadBtn) {
+      markAllReadBtn.addEventListener('click', async () => {
+        await fetch('/api/notifications/read-all', { method: 'PUT' });
+        fetchTopNotifications();
+      });
+    }
+
+    // Global System Status Poller
+    async function updateSystemStatus() {
+      try {
+        const res = await fetch('/api/system-status');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const dotESP32 = document.getElementById('statusDotESP32');
+        const textESP32 = document.getElementById('statusTextESP32');
+        if (dotESP32 && textESP32) {
+          textESP32.textContent = data.esp32;
+          dotESP32.className = 'indicator-dot ' + (data.esp32 === 'ONLINE' ? 'online' : 'offline');
+        }
+
+        const dotWiFi = document.getElementById('statusDotWiFi');
+        const textWiFi = document.getElementById('statusTextWiFi');
+        if (dotWiFi && textWiFi) {
+          textWiFi.textContent = data.wifi;
+          dotWiFi.className = 'indicator-dot ' + (data.wifi === 'CONNECTED' ? 'online' : 'offline');
+        }
+
+        const dotSensor = document.getElementById('statusDotSensor');
+        const textSensor = document.getElementById('statusTextSensor');
+        if (dotSensor && textSensor) {
+          textSensor.textContent = data.sensor;
+          dotSensor.className = 'indicator-dot ' + (data.sensor === 'ACTIVE' ? 'online' : 'offline');
+        }
+
+        const dotDB = document.getElementById('statusDotDB');
+        const textDB = document.getElementById('statusTextDB');
+        if (dotDB && textDB) {
+          textDB.textContent = data.database;
+          dotDB.className = 'indicator-dot ' + (data.database === 'CONNECTED' ? 'online' : 'offline');
+        }
+
+        const syncText = document.getElementById('lastSyncText');
+        if (syncText) {
+          if (data.last_sync_seconds_ago !== null && data.last_sync_seconds_ago !== undefined) {
+            if (data.last_sync_seconds_ago < 5) {
+              syncText.textContent = "Just now";
+            } else if (data.last_sync_seconds_ago < 60) {
+              syncText.textContent = `${data.last_sync_seconds_ago}s ago`;
+            } else {
+              const mins = Math.floor(data.last_sync_seconds_ago / 60);
+              syncText.textContent = `${mins}m ago`;
+            }
+          } else {
+            syncText.textContent = "No data yet";
+          }
+        }
+
+        const badge = document.getElementById('telemetrySourceBadge');
+        if (badge) {
+          if (data.is_latest_simulated || data.is_demo_active) {
+            badge.textContent = "DEMO DATA";
+            badge.className = "badge-demo";
+          } else {
+            badge.textContent = "LIVE SENSOR DATA";
+            badge.className = "badge-live";
+          }
+        }
+
+        const demoBtn = document.getElementById('demoBtnText');
+        if (demoBtn) {
+          demoBtn.textContent = data.is_demo_active ? "Stop Demo" : "Start Demo";
+        }
+
+      } catch (err) {
+        console.warn("Status poller error:", err);
+      }
+    }
+
+    const globalDemoBtn = document.getElementById('globalDemoToggleBtn');
+    if (globalDemoBtn) {
+      globalDemoBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/demo/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const result = await res.json();
+          if (result.demo_mode) {
+            await fetch('/api/demo/generate-reading', { method: 'POST' });
+          }
+          updateSystemStatus();
+          if (window.refreshDashboardData) window.refreshDashboardData();
+        } catch (e) {
+          console.error("Failed to toggle demo:", e);
+        }
+      });
+    }
+
+    updateSystemStatus();
+    setInterval(updateSystemStatus, 5000);
+    setInterval(fetchTopNotifications, 10000);
+
+    // Onboarding handlers
+    function closeOnboardingModal() {
+      const modal = document.getElementById('onboardingModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function submitOnboarding() {
+      const payload = {
+        mobile_number: document.getElementById('obMobile')?.value.trim() || '',
+        address: document.getElementById('obAddress')?.value.trim() || '',
+        city: document.getElementById('obCity')?.value.trim() || '',
+        state: document.getElementById('obState')?.value.trim() || '',
+        country: document.getElementById('obCountry')?.value.trim() || 'India',
+        pincode: document.getElementById('obPincode')?.value.trim() || ''
+      };
+
+      try {
+        await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        closeOnboardingModal();
+      } catch (e) {
+        closeOnboardingModal();
+      }
+    }
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

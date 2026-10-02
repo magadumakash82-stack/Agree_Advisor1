@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification Center{% endblock %}
+{% block page_title %}NOTIFICATION CENTER{% endblock %}
+{% block page_subtitle %}Real-time Telemetry Alerts, Soil Health Warnings & System Dispatches{% endblock %}
+
+{% block content %}
+
+<!-- ACTION BAR -->
+<div class="card" style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <span style="font-weight: 700; font-size: 13px;">Filter:</span>
+    <button class="btn btn-sm btn-primary notif-filter-btn" data-filter="all">All Alerts</button>
+    <button class="btn btn-sm btn-outline notif-filter-btn" data-filter="unread">Unread Only</button>
+    <button class="btn btn-sm btn-outline notif-filter-btn" data-filter="soil">Soil Alerts</button>
+    <button class="btn btn-sm btn-outline notif-filter-btn" data-filter="sensor">Sensor Alerts</button>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-sm btn-outline" id="btnMarkAllRead">
+      <i class="fa-solid fa-check-double"></i> Mark All as Read
+    </button>
+    <a href="{{ url_for('web.settings') }}#notifications" class="btn btn-sm btn-outline">
+      <i class="fa-solid fa-sliders"></i> Notification Preferences
+    </a>
+  </div>
+</div>
+
+<!-- NOTIFICATION LIST -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-bell"></i>
+      <span>Alert History</span>
+    </div>
+    <span style="font-size: 12px; color: var(--text-muted);" id="notifCountText">Loading alerts...</span>
+  </div>
+
+  <div id="notifListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i><br>
+      Loading notifications...
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let allNotifications = [];
+  let currentFilter = 'all';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadNotifications();
+
+    document.querySelectorAll('.notif-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.notif-filter-btn').forEach(b => b.className = 'btn btn-sm btn-outline notif-filter-btn');
+        btn.className = 'btn btn-sm btn-primary notif-filter-btn';
+        currentFilter = btn.dataset.filter;
+        renderNotifications();
+      });
+    });
+
+    document.getElementById('btnMarkAllRead').addEventListener('click', async () => {
+      await fetch('/api/notifications/read-all', { method: 'PUT' });
+      loadNotifications();
+      if (window.updateTopNotificationBell) window.updateTopNotificationBell();
+    });
+  });
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch('/api/notifications');
+      if (!res.ok) return;
+      const data = await res.json();
+      allNotifications = data.items || [];
+      renderNotifications();
+    } catch (e) {
+      console.error("Error loading notifications:", e);
+    }
+  }
+
+  function renderNotifications() {
+    const container = document.getElementById('notifListContainer');
+    const countText = document.getElementById('notifCountText');
+
+    let filtered = allNotifications;
+    if (currentFilter === 'unread') {
+      filtered = allNotifications.filter(n => !n.is_read);
+    } else if (currentFilter !== 'all') {
+      filtered = allNotifications.filter(n => n.type === currentFilter);
+    }
+
+    countText.textContent = `${filtered.length} notification${filtered.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <i class="fa-regular fa-bell-slash" style="font-size: 32px; margin-bottom: 12px; color: var(--text-light); display: block;"></i>
+          No notifications found in this view.
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(n => {
+      let icon = 'fa-solid fa-circle-info';
+      let borderCol = '#cbd5e1';
+      if (n.type === 'soil') { icon = 'fa-solid fa-leaf'; borderCol = '#86efac'; }
+      else if (n.type === 'sensor') { icon = 'fa-solid fa-triangle-exclamation'; borderCol = '#fcd34d'; }
+      else if (n.type === 'crop') { icon = 'fa-solid fa-wheat-awn'; borderCol = '#38bdf8'; }
+
+      const bg = n.is_read ? 'var(--bg-card)' : 'var(--accent-soft)';
+      const unreadDot = !n.is_read ? '<span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;margin-right:6px;"></span>' : '';
+
+      html += `
+        <div style="background: ${bg}; border: 1px solid var(--border-color); border-left: 4px solid ${borderCol}; border-radius: 8px; padding: 14px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; transition: background 0.2s;">
+          <div style="display: flex; gap: 14px; align-items: flex-start;">
+            <div style="padding-top: 2px; color: var(--primary); font-size: 16px;">
+              <i class="${icon}"></i>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                ${unreadDot}
+                <strong style="font-size: 13.5px; color: var(--text-main);">${n.title}</strong>
+                <span class="badge badge-normal" style="font-size: 9.5px;">${n.type.toUpperCase()}</span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px;">${n.message}</p>
+              <div style="font-size: 11px; color: var(--text-light);">
+                <i class="fa-regular fa-clock"></i> ${n.formatted_time || ''}
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            ${!n.is_read ? `
+              <button class="btn btn-sm btn-outline" onclick="markOneRead(${n.id})" title="Mark as read">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            ` : ''}
+            <button class="btn btn-sm btn-outline" style="color: #ef4444;" onclick="deleteOneNotif(${n.id})" title="Delete notification">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  async function markOneRead(id) {
+    await fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+    loadNotifications();
+    if (window.updateTopNotificationBell) window.updateTopNotificationBell();
+  }
+
+  async function deleteOneNotif(id) {
+    if (!confirm("Delete this notification?")) return;
+    await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+    loadNotifications();
+    if (window.updateTopNotificationBell) window.updateTopNotificationBell();
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - AgriAdvisor</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #0f172a 100%);
+      padding: 24px;
+      margin: 0;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .login-wrapper {
+      max-width: 960px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      display: flex;
+      overflow: hidden;
+      min-height: 540px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* LEFT SIDE: BRANDING & AGRICULTURAL ARTWORK */
+    .login-brand-panel {
+      flex: 1.1;
+      background: linear-gradient(145deg, #1b5e20, #2e7d32 60%, #15803d);
+      color: #ffffff;
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-glow {
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(134, 239, 172, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .brand-top {
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #bbf7d0;
+      margin-bottom: 20px;
+    }
+
+    .brand-heading {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    .brand-subheading {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #dcfce7;
+      margin-bottom: 28px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #f0fdf4;
+    }
+
+    .feature-item i {
+      color: #86efac;
+      font-size: 15px;
+    }
+
+    .brand-bottom-note {
+      font-size: 11px;
+      color: #a7f3d0;
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 16px;
+      margin-top: 24px;
+    }
+
+    /* RIGHT SIDE: GOOGLE AUTHENTICATION */
+    .login-form-panel {
+      flex: 1;
+      padding: 48px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #ffffff;
+    }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .form-subtitle {
+      font-size: 13.5px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    /* GOOGLE BUTTON (SECTION 1 & 22) */
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 20px;
+      background-color: #ffffff;
+      color: #1f2937;
+      border: 1.5px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .btn-google:hover {
+      background-color: #f9fafb;
+      border-color: #9ca3af;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-google svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .auth-security-note {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .auth-powered-by {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 11.5px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .oauth-info-box {
+      margin-top: 32px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 11.5px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .oauth-info-box strong {
+      color: #0f172a;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 820px) {
+      .login-wrapper {
+        flex-direction: column;
+        border-radius: 20px;
+      }
+      .login-brand-panel {
+        padding: 32px 24px;
+      }
+      .login-form-panel {
+        padding: 36px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    
+    <!-- LEFT PANEL: BRAND & OVERVIEW -->
+    <div class="login-brand-panel">
+      <div class="brand-glow"></div>
+      
+      <div class="brand-top">
+        <div class="brand-badge">
+          <i class="fa-solid fa-seedling"></i> Agri-IoT Intelligence
+        </div>
+        <h1 class="brand-heading">
+          AgriAdvisor
+        </h1>
+        <p class="brand-subheading">
+          IoT-powered agricultural intelligence platform. Real-time 7-in-1 Modbus telemetry, soil health analytics, and transparent agronomic crop guidance.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Continuous 7-in-1 RS485 NPK, pH & Moisture Telemetry</span>
+          </div>
+          <div class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Transparent Parameter-by-Parameter Crop Compatibility</span>
+          </div>
+          <div class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Machine-to-Machine ESP32 API with Hardware Isolation</span>
+          </div>
+          <div class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Instant PDF Agronomic Health Reports & CSV Data Export</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-bottom-note">
+        <i class="fa-solid fa-shield-halved"></i> Google OpenID Connect &bull; Zero Password Storage &bull; ECE / IoT / AI Project
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: GOOGLE SIGN-IN -->
+    <div class="login-form-panel">
+      
+      <!-- FLASH MESSAGES -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="margin-bottom: 20px; font-size: 12.5px;">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div>
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to continue to your agricultural dashboard</p>
+
+        <!-- GOOGLE OAUTH BUTTON (MANDATORY REQUIREMENT) -->
+        <a href="{{ url_for('auth.google_auth', next=request.args.get('next')) }}" class="btn-google" id="btnContinueGoogle">
+          <svg viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.64-5.2 3.64-9.15z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.08.72-2.45 1.16-4.03 1.16-3.1 0-5.73-2.1-6.67-4.93H1.28v3.15C3.25 21.3 7.31 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.33 14.27c-.24-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.28C.46 8.2 0 10.04 0 12s.46 3.8 1.28 5.42l4.05-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.28 6.58l4.05 3.15c.94-2.83 3.57-4.98 6.67-4.98z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </a>
+
+        <div class="auth-security-note">
+          Sign in securely with your Google account.
+        </div>
+        
+        <div class="auth-powered-by">
+          <i class="fa-solid fa-lock"></i> Secure authentication powered by Google.
+        </div>
+
+        <div class="oauth-info-box">
+          <strong><i class="fa-solid fa-user-shield"></i> Privacy &amp; Security Assurance:</strong>
+          This application never requests or stores your Google password. Authentication is verified through Google's official OpenID Connect protocol.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

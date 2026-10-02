@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+
+{% block title %}System Settings{% endblock %}
+{% block page_title %}SYSTEM SETTINGS & PREFERENCES{% endblock %}
+{% block page_subtitle %}Appearance, Notification Channels, Google Account Security & Hardware Telemetry{% endblock %}
+
+{% block content %}
+
+<!-- SETTINGS NAVIGATION TABS -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px;">
+  <button class="btn btn-sm btn-primary settings-tab-btn" data-target="sectionAppearance">
+    <i class="fa-solid fa-palette"></i> Appearance
+  </button>
+  <button class="btn btn-sm btn-outline settings-tab-btn" data-target="sectionNotifications">
+    <i class="fa-solid fa-bell"></i> Notifications
+  </button>
+  <button class="btn btn-sm btn-outline settings-tab-btn" data-target="sectionAccount">
+    <i class="fa-solid fa-user-shield"></i> Account &amp; Google
+  </button>
+  <button class="btn btn-sm btn-outline settings-tab-btn" data-target="sectionPrivacy">
+    <i class="fa-solid fa-lock"></i> Privacy &amp; Data
+  </button>
+  <button class="btn btn-sm btn-outline settings-tab-btn" data-target="sectionHardware">
+    <i class="fa-solid fa-microchip"></i> Hardware &amp; IoT
+  </button>
+</div>
+
+<!-- ========================================== -->
+<!-- 1. APPEARANCE SETTINGS (SECTION 11 & 12)   -->
+<!-- ========================================== -->
+<div class="card settings-section" id="sectionAppearance">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-palette"></i>
+      <span>Appearance &amp; Theme Mode</span>
+    </div>
+    <span style="font-size: 12px; color: var(--text-muted);">Saved in database &amp; synced across sessions</span>
+  </div>
+
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+    Select your preferred interface color theme. Dark mode optimizes visibility during nighttime farm inspections and reduces screen glare.
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    
+    <!-- Light Theme Card -->
+    <label class="theme-card-option" for="themeLight">
+      <input type="radio" name="themeChoice" id="themeLight" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
+      <div class="theme-card-preview" style="background: #ffffff; border: 1px solid #e2e8f0;">
+        <div style="height: 14px; background: #2e7d32; border-radius: 4px; margin-bottom: 6px;"></div>
+        <div style="height: 8px; width: 60%; background: #e2e8f0; border-radius: 3px; margin-bottom: 4px;"></div>
+        <div style="height: 8px; width: 80%; background: #f1f5f9; border-radius: 3px;"></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <span style="font-weight: 700; font-size: 13.5px;"><i class="fa-regular fa-sun" style="color: #ea580c;"></i> Light Theme</span>
+        <span class="custom-radio"></span>
+      </div>
+      <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 4px;">Clean crisp daytime palette</span>
+    </label>
+
+    <!-- Dark Theme Card -->
+    <label class="theme-card-option" for="themeDark">
+      <input type="radio" name="themeChoice" id="themeDark" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
+      <div class="theme-card-preview" style="background: #0f172a; border: 1px solid #334155;">
+        <div style="height: 14px; background: #15803d; border-radius: 4px; margin-bottom: 6px;"></div>
+        <div style="height: 8px; width: 60%; background: #334155; border-radius: 3px; margin-bottom: 4px;"></div>
+        <div style="height: 8px; width: 80%; background: #1e293b; border-radius: 3px;"></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <span style="font-weight: 700; font-size: 13.5px;"><i class="fa-regular fa-moon" style="color: #38bdf8;"></i> Dark Theme</span>
+        <span class="custom-radio"></span>
+      </div>
+      <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 4px;">Eye-friendly low-light mode</span>
+    </label>
+
+    <!-- System Default Card -->
+    <label class="theme-card-option" for="themeSystem">
+      <input type="radio" name="themeChoice" id="themeSystem" value="system" {% if user.theme_preference == 'system' %}checked{% endif %}>
+      <div class="theme-card-preview" style="background: linear-gradient(135deg, #ffffff 50%, #0f172a 50%); border: 1px solid #cbd5e1;">
+        <div style="height: 14px; background: #2e7d32; border-radius: 4px; margin-bottom: 6px;"></div>
+        <div style="height: 8px; width: 60%; background: #94a3b8; border-radius: 3px; margin-bottom: 4px;"></div>
+        <div style="height: 8px; width: 80%; background: #64748b; border-radius: 3px;"></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <span style="font-weight: 700; font-size: 13.5px;"><i class="fa-solid fa-desktop" style="color: var(--primary);"></i> System Default</span>
+        <span class="custom-radio"></span>
+      </div>
+      <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 4px;">Matches your operating system</span>
+    </label>
+
+  </div>
+
+  <div style="text-align: right;">
+    <button class="btn btn-primary" id="btnSaveTheme">
+      <i class="fa-solid fa-floppy-disk"></i> Apply Theme
+    </button>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 2. NOTIFICATIONS SETTINGS (SECTION 13 & 16)    -->
+<!-- ============================================== -->
+<div class="card settings-section" id="sectionNotifications" style="display: none;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-bell"></i>
+      <span>Alert Channels &amp; Notification Rules</span>
+    </div>
+    <span style="font-size: 12px; color: var(--text-muted);">Configure alerts for agronomic variances</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 680px;">
+    
+    <!-- Master Toggle -->
+    <div class="setting-toggle-row" style="background: var(--accent-soft); border-color: var(--primary-border); padding: 14px 18px; border-radius: 10px;">
+      <div>
+        <strong style="font-size: 14px; color: var(--text-main);">Master Notifications</strong>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Enable or mute all notifications across the platform.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifMaster" {% if user.notification_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Sensor Alerts -->
+    <div class="setting-toggle-row">
+      <div>
+        <strong>Sensor Offline &amp; Hardware Alerts</strong>
+        <p style="font-size: 12px; color: var(--text-muted);">Triggered when an ESP32 node stops reporting for 30+ seconds.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifSensor" {% if user.sensor_alerts %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Soil Health Alerts -->
+    <div class="setting-toggle-row">
+      <div>
+        <strong>Soil Health &amp; Variance Alerts</strong>
+        <p style="font-size: 12px; color: var(--text-muted);">Triggered when moisture, pH, EC, or N-P-K violate configured target bounds.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifSoil" {% if user.soil_alerts %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Crop Alerts -->
+    <div class="setting-toggle-row">
+      <div>
+        <strong>Crop Optimization Advisory Alerts</strong>
+        <p style="font-size: 12px; color: var(--text-muted);">Updates when suitability rank or growth factors change drastically.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifCrop" {% if user.crop_alerts %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Browser Notifications -->
+    <div class="setting-toggle-row">
+      <div>
+        <strong>Browser Push Notifications</strong>
+        <p style="font-size: 12px; color: var(--text-muted);">Receive desktop push notifications when active in browser.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifBrowser" {% if user.browser_notifications %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Email Notifications -->
+    <div class="setting-toggle-row">
+      <div>
+        <strong>Email Notifications (SMTP)</strong>
+        <p style="font-size: 12px; color: var(--text-muted);">Dispatch critical agronomic incident summaries to <code>{{ user.email }}</code>.</p>
+        <small style="color: var(--text-light); font-size: 11px;">(Requires MAIL_SERVER in .env; gracefully disabled if unconfigured)</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notifEmail" {% if user.email_notifications %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+  </div>
+
+  <div style="text-align: right; margin-top: 24px;">
+    <button class="btn btn-primary" id="btnSaveNotifications">
+      <i class="fa-solid fa-floppy-disk"></i> Save Notification Rules
+    </button>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 3. ACCOUNT SETTINGS (SECTION 19)               -->
+<!-- ============================================== -->
+<div class="card settings-section" id="sectionAccount" style="display: none;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-user-shield"></i>
+      <span>Google Authenticated Identity</span>
+    </div>
+    <span class="badge badge-normal"><i class="fa-solid fa-check"></i> Connected</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+      <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Google Identity Name</span>
+      <div style="font-size: 15px; font-weight: 700; margin-top: 2px;">{{ user.name or user.get_display_name() }}</div>
+    </div>
+    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+      <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Verified Google Email</span>
+      <div style="font-size: 15px; font-weight: 700; margin-top: 2px;">{{ user.email }}</div>
+    </div>
+    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+      <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Account Created</span>
+      <div style="font-size: 14px; font-weight: 600; margin-top: 2px;">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}</div>
+    </div>
+    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+      <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Last Google Login</span>
+      <div style="font-size: 14px; font-weight: 600; margin-top: 2px;">{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Current session' }}</div>
+    </div>
+  </div>
+
+  <div style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h4 style="font-size: 14px; font-weight: 700; color: #dc2626;">Danger Zone</h4>
+      <p style="font-size: 12px; color: var(--text-muted);">Permanently remove this account and its associated telemetry history from the application database.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </a>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteAccount()">
+        <i class="fa-solid fa-trash-can"></i> Delete Account
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 4. PRIVACY SETTINGS (SECTION 20)               -->
+<!-- ============================================== -->
+<div class="card settings-section" id="sectionPrivacy" style="display: none;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Privacy &amp; Data Security Disclosures</span>
+    </div>
+  </div>
+
+  <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; margin-bottom: 20px; font-size: 13px; line-height: 1.6;">
+    <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--primary);">
+      <i class="fa-solid fa-lock"></i> Zero Password Storage Guarantee
+    </h4>
+    <p>
+      This application uses official Google OAuth 2.0 / OpenID Connect tokens. We do not prompt for, collect, or store your Google password. Your session authentication is verified directly with Google identity servers.
+    </p>
+
+    <h4 style="font-size: 14px; font-weight: 700; margin-top: 16px; margin-bottom: 8px; color: var(--primary);">
+      <i class="fa-solid fa-database"></i> Telemetry &amp; Profile Data Isolation
+    </h4>
+    <p>
+      Farm location, device serial identifiers, and soil telemetry records are stored in your local application database and are strictly segregated by user ownership.
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 14px;">
+    <button class="btn btn-sm btn-outline" onclick="openPolicyModal('privacy')">
+      <i class="fa-solid fa-file-contract"></i> View Privacy Policy
+    </button>
+    <button class="btn btn-sm btn-outline" onclick="openPolicyModal('terms')">
+      <i class="fa-solid fa-scale-balanced"></i> Terms of Use
+    </button>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 5. HARDWARE & IOT (SECTIONS 21 & 32)           -->
+<!-- ============================================== -->
+<div class="card settings-section" id="sectionHardware" style="display: none;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-microchip"></i>
+      <span>ESP32 Machine-to-Machine API Key &amp; Offline Timeouts</span>
+    </div>
+    <span class="badge badge-normal">Machine-to-Machine Auth</span>
+  </div>
+
+  <form method="POST" action="{{ url_for('web.settings') }}">
+    <div class="form-group">
+      <label class="form-label" for="apiKeyInput">REST API Key (X-API-Key Header for ESP32)</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="apiKeyInput" name="api_key" class="form-control" value="{{ api_key }}" style="font-family: monospace;" required>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyApiKey()" title="Copy API key">
+          <i class="fa-regular fa-copy"></i>
+        </button>
+      </div>
+      <small style="color: var(--text-muted); font-size: 11px;">
+        Configure this key in <code>smart_soil_esp32.ino</code>. ESP32 sends this key in the <code>X-API-Key</code> HTTP header.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="offlineTimeoutInput">Sensor Offline Timeout (Seconds)</label>
+      <input type="number" id="offlineTimeoutInput" name="offline_timeout" class="form-control" value="{{ offline_timeout }}" min="5" max="3600" required>
+      <small style="color: var(--text-muted); font-size: 11px;">
+        Threshold after which a device is flagged as <strong>OFFLINE</strong> if no packet arrives (Default: 30s).
+      </small>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+      <i class="fa-solid fa-floppy-disk"></i> Update Hardware Settings
+    </button>
+  </form>
+</div>
+
+<!-- POLICY MODAL -->
+<div class="modal" id="policyModal">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 id="policyModalTitle">Policy Document</h3>
+      <button class="modal-close" onclick="closePolicyModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="policyModalBody" style="max-height: 380px; overflow-y: auto; font-size: 13px; line-height: 1.6;">
+      <!-- Content injected by JavaScript -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closePolicyModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .theme-card-option {
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: block;
+    background: var(--bg-card);
+  }
+  .theme-card-option input[type="radio"] {
+    display: none;
+  }
+  .theme-card-option:has(input:checked) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+  }
+  .theme-card-preview {
+    border-radius: 8px;
+    padding: 12px;
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .custom-radio {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: inline-block;
+  }
+  .theme-card-option input:checked ~ div .custom-radio {
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: inset 0 0 0 3px #ffffff;
+  }
+  .setting-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+  }
+  /* Toggle Switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: .3s;
+    border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--primary); }
+  input:checked + .slider:before { transform: translateX(20px); }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tab switching
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.settings-tab-btn').forEach(b => b.className = 'btn btn-sm btn-outline settings-tab-btn');
+        btn.className = 'btn btn-sm btn-primary settings-tab-btn';
+
+        document.querySelectorAll('.settings-section').forEach(sec => sec.style.display = 'none');
+        document.getElementById(btn.dataset.target).style.display = 'block';
+      });
+    });
+
+    // Theme saving
+    document.getElementById('btnSaveTheme').addEventListener('click', async () => {
+      const selected = document.querySelector('input[name="themeChoice"]:checked')?.value || 'system';
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: selected })
+        });
+        if (res.ok) {
+          // Apply immediately via global helper
+          if (window.applyThemeMode) window.applyThemeMode(selected);
+          alert(`Theme preference saved (${selected.toUpperCase()}).`);
+        }
+      } catch (e) {
+        alert("Failed to save theme.");
+      }
+    });
+
+    // Notification settings saving
+    document.getElementById('btnSaveNotifications').addEventListener('click', async () => {
+      const payload = {
+        notifications_enabled: document.getElementById('notifMaster').checked,
+        sensor_alerts: document.getElementById('notifSensor').checked,
+        soil_alerts: document.getElementById('notifSoil').checked,
+        crop_alerts: document.getElementById('notifCrop').checked,
+        browser_notifications: document.getElementById('notifBrowser').checked,
+        email_notifications: document.getElementById('notifEmail').checked
+      };
+
+      // If browser notifications requested, trigger permission request
+      if (payload.browser_notifications && "Notification" in window) {
+        if (Notification.permission !== "granted") {
+          const perm = await Notification.requestPermission();
+          if (perm !== "granted") {
+            alert("Browser notification permission was denied in your browser settings.");
+            document.getElementById('notifBrowser').checked = false;
+            payload.browser_notifications = false;
+          }
+        }
+      }
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert("Notification preferences saved successfully.");
+        }
+      } catch (e) {
+        alert("Failed to save notification settings.");
+      }
+    });
+  });
+
+  function copyApiKey() {
+    const input = document.getElementById('apiKeyInput');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    alert("API Key copied to clipboard!");
+  }
+
+  async function confirmDeleteAccount() {
+    const confirmation = prompt("To permanently delete your local account and all telemetry records, type 'DELETE' below:");
+    if (confirmation === 'DELETE') {
+      try {
+        const res = await fetch('/api/account/delete', { method: 'POST' });
+        if (res.ok) {
+          alert("Your application account has been deleted. Redirecting to login...");
+          window.location.href = '/login';
+        } else {
+          alert("Could not delete account.");
+        }
+      } catch (e) {
+        alert("Network error.");
+      }
+    }
+  }
+
+  function openPolicyModal(type) {
+    const title = document.getElementById('policyModalTitle');
+    const body = document.getElementById('policyModalBody');
+    if (type === 'privacy') {
+      title.textContent = "Privacy Policy";
+      body.innerHTML = `
+        <h4>1. Information Collected</h4>
+        <p>This system receives Google verified profile details (Full Name, verified email address, profile avatar) through Google OpenID Connect. We do not store or solicit account passwords.</p>
+        <h4>2. Telemetry and Soil Data</h4>
+        <p>Sensor readings collected via connected ESP32 nodes (Moisture, Temp, EC, pH, N, P, K) are stored locally in the database for the purpose of agronomic optimization and generating downloadable reports.</p>
+        <h4>3. Data Sharing</h4>
+        <p>Data remains inside your deployed application instance and is not sold or exported to third parties.</p>
+      `;
+    } else {
+      title.textContent = "Terms of Use";
+      body.innerHTML = `
+        <h4>1. Nature of Agronomic Guidance</h4>
+        <p>Crop suitability scores and soil management recommendations provided by this system are strictly indicative models based on measured physical and chemical parameters. Users must validate guidance with certified laboratory soil testing and local agricultural university advisories.</p>
+        <h4>2. Hardware Telemetry Liability</h4>
+        <p>Sensor readings depend on physical probe calibration, voltage levels, and soil contact. Hardware operators are responsible for ensuring correct electrical connections and power supply stability.</p>
+      `;
+    }
+    document.getElementById('policyModal').classList.add('active');
+  }
+
+  function closePolicyModal() {
+    document.getElementById('policyModal').classList.remove('active');
+  }
+</script>
+{% endblock %}

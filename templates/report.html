@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Soil Health & Agronomic Report{% endblock %}
+{% block page_title %}COMPREHENSIVE SOIL HEALTH REPORT{% endblock %}
+{% block page_subtitle %}Field Telemetry Assessment, Crop Suitability Matrix & Agronomic Guidance{% endblock %}
+
+{% block content %}
+
+<!-- ACTION BAR -->
+<div class="card" style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <strong>Report Reference:</strong>
+    <span style="color: var(--text-muted); font-size: 13px;">
+      Device: <strong>{{ reading.device_id }}</strong> &bull; Telemetry Time: {{ reading.formatted_time }}
+    </span>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-sm btn-outline" onclick="window.print()">
+      <i class="fa-solid fa-print"></i> Print Report
+    </button>
+    <a href="{{ url_for('api.export_pdf', device_id=reading.device_id) }}" class="btn btn-sm btn-primary">
+      <i class="fa-solid fa-file-pdf"></i> Download Official PDF Report
+    </a>
+  </div>
+</div>
+
+<!-- PRINTABLE REPORT SHEET -->
+<div class="card" style="padding: 30px; background: #ffffff;" id="printableReport">
+  
+  <!-- REPORT HEADER -->
+  <div style="border-bottom: 2px solid var(--primary); padding-bottom: 16px; margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 800; color: var(--primary-dark); margin-bottom: 4px;">
+          AgriAdvisor - SOIL HEALTH &amp; CROP OPTIMIZATION REPORT
+        </h1>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          IoT-Based Agricultural Soil Monitoring & Telemetry Analytics
+        </p>
+      </div>
+      <div style="text-align: right; font-size: 12px; color: var(--text-muted);">
+        <div><strong>Status:</strong> <span class="badge badge-normal">CERTIFIED ANALYSIS</span></div>
+        <div><strong>Generated:</strong> {{ reading.formatted_time }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVICE & FIELD METADATA TABLE -->
+  <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 13px;">
+      <div>
+        <span style="color: var(--text-muted); display: block; font-size: 11px; text-transform: uppercase;">Device Identifier</span>
+        <strong>{{ reading.device_id }}</strong>
+        {% if reading.is_simulated %}
+          <span class="badge-demo" style="margin-left: 6px;">Simulated</span>
+        {% else %}
+          <span class="badge-live" style="margin-left: 6px;">Hardware Sensor</span>
+        {% endif %}
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block; font-size: 11px; text-transform: uppercase;">Field Location</span>
+        <strong>Plot Sector A - North Field</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block; font-size: 11px; text-transform: uppercase;">Overall Health Index</span>
+        <strong style="color: #15803d; font-size: 16px;">{{ analysis.health_index }}% ({{ analysis.health_status }})</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block; font-size: 11px; text-transform: uppercase;">Sensor Protocol</span>
+        <strong>RS485 Modbus RTU / ESP32</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. MEASURED PARAMETERS TABLE -->
+  <div style="margin-bottom: 28px;">
+    <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> 1. Measured 7-in-1 Soil Parameters
+    </h3>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Measured Value</th>
+            <th>Standard Unit</th>
+            <th>Agronomic Status</th>
+            <th>Classification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p_key, p_data in analysis.parameters.items() %}
+            <tr>
+              <td><strong>{{ p_data.name }}</strong></td>
+              <td style="font-weight: 700; font-size: 14px;">{{ p_data.value }}</td>
+              <td>{{ p_data.unit }}</td>
+              <td>
+                <span class="badge badge-{{ p_data.level }}">
+                  {{ p_data.label }}
+                </span>
+              </td>
+              <td style="font-size: 12px; color: var(--text-muted);">
+                {% if p_data.level == 'normal' %}
+                  Nominal range for standard crop cultivation.
+                {% elif p_data.level == 'warning' %}
+                  Moderate variance from standard target.
+                {% else %}
+                  Critical threshold requiring agronomic intervention.
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. HEALTH SUMMARY & RECOMMENDATIONS -->
+  <div style="margin-bottom: 28px;">
+    <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i> 2. Soil Health Assessment & Actionable Guidance
+    </h3>
+
+    <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+      <strong style="color: #166534; font-size: 13.5px;">Executive Summary:</strong>
+      <p style="color: #15803d; font-size: 12.5px; margin-top: 4px;">
+        {{ analysis.health_summary }}
+      </p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      {% for rec in analysis.recommendations %}
+        <div style="padding: 12px 16px; background: #f8fafc; border: 1px solid var(--border-light); border-left: 4px solid var(--primary); border-radius: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="font-size: 13px; color: var(--text-main);">{{ rec.title }}</strong>
+            <span class="badge badge-normal">{{ rec.category }}</span>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">{{ rec.text }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 3. TOP CROP SUITABILITY MATRIX -->
+  <div style="margin-bottom: 28px;">
+    <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-wheat-awn" style="color: var(--primary);"></i> 3. Crop Suitability Analysis (Top Candidates)
+    </h3>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Crop</th>
+            <th>Category</th>
+            <th>Compatibility Score</th>
+            <th>Suitability Class</th>
+            <th>Water Requirement</th>
+            <th>Soil Preference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for crop in crop_eval.crops[:6] %}
+            <tr>
+              <td>
+                <strong>{{ crop.crop_name }}</strong><br>
+                <span style="font-size: 10.5px; color: var(--text-muted); font-style: italic;">{{ crop.scientific_name }}</span>
+              </td>
+              <td>{{ crop.category }}</td>
+              <td>
+                <span style="font-size: 15px; font-weight: 800; color: var(--primary);">
+                  {{ crop.suitability_percent }}%
+                </span>
+              </td>
+              <td><span class="badge {{ 'badge-optimal' if crop.suitability_percent >= 70 else 'badge-warning' }}">{{ crop.suitability_label }}</span></td>
+              <td>{{ crop.water_requirement }}</td>
+              <td>{{ crop.preferred_soil }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- OFFICIAL DISCLAIMER (SECTION 18 & 19 REQUIREMENT) -->
+  <div style="border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 24px; font-size: 11px; color: var(--text-muted); font-style: italic;">
+    <strong>Agronomic Disclaimer:</strong> Recommendations are indicative based on measured physical and nutrient soil parameters. They are not intended as commercial guarantees and must be validated through local agricultural university extensions, regional agronomic advisories, and certified chemical laboratory soil testing prior to seed selection or fertilizer procurement.
+  </div>
+
+</div>
+
+{% endblock %}
